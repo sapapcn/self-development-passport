@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alexis Phoebe — Development Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06060e; --surface: rgba(255,255,255,0.04); --border: rgba(0,245,255,0.12);
+    --cyan: #00f5ff; --magenta: #ff00ff; --gold: #c9a84c;
+    --text: #e8e8f0; --muted: #8899aa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+  header {
+    background: rgba(6,6,22,0.95); border-bottom: 1px solid var(--border);
+    padding: 20px 32px; display: flex; align-items: center; gap: 16px;
+    position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px);
+  }
+  header h1 { font-family: 'Orbitron', monospace; font-size: 1rem; letter-spacing: 3px; color: var(--cyan); }
+  header .sub { font-size: 0.72rem; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
+  .sync-badge { margin-left: auto; font-size: 0.68rem; font-family: 'Orbitron', monospace;
+    letter-spacing: 2px; color: var(--muted); }
+
+  nav { display: flex; gap: 4px; padding: 16px 32px; border-bottom: 1px solid var(--border);
+    background: rgba(6,6,22,0.7); flex-wrap: wrap; }
+  nav button { background: none; border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Orbitron', monospace; font-size: 0.62rem; letter-spacing: 2px;
+    padding: 8px 16px; border-radius: 3px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+  nav button:hover, nav button.active { border-color: var(--cyan); color: var(--cyan);
+    background: rgba(0,245,255,0.06); }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .section-title { font-family: 'Orbitron', monospace; font-size: 0.72rem; letter-spacing: 4px;
+    color: var(--cyan); text-transform: uppercase; margin-bottom: 24px; opacity: 0.8;
+    border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+
+  /* Calendar */
+  .cal-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .cal-nav button { background: none; border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Orbitron', monospace; font-size: 0.65rem; padding: 6px 14px;
+    border-radius: 3px; cursor: pointer; letter-spacing: 2px; }
+  .cal-nav button:hover { border-color: var(--cyan); color: var(--cyan); }
+  .cal-nav h2 { font-family: 'Orbitron', monospace; font-size: 0.85rem; letter-spacing: 3px; color: var(--text); }
+  .cal-legend { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .cal-legend span { font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .cal-legend .dot { width: 10px; height: 10px; border-radius: 2px; }
+  .cal-dot-planned { background: rgba(0,245,255,0.3); border: 1px solid var(--cyan); }
+  .cal-dot-actual  { background: rgba(255,0,255,0.3); border: 1px solid var(--magenta); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cal-dow  { text-align: center; font-family: 'Orbitron', monospace; font-size: 0.55rem;
+    letter-spacing: 2px; color: var(--muted); padding: 6px 0; }
+  .cal-cell { min-height: 72px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px; padding: 5px; position: relative; }
+  .cal-cell.today { border-color: rgba(0,245,255,0.4); background: rgba(0,245,255,0.04); }
+  .cal-cell.other-month { opacity: 0.3; }
+  .cal-num { font-size: 0.65rem; color: var(--muted); margin-bottom: 3px; font-family: 'Orbitron', monospace; }
+  .cal-act { font-size: 0.6rem; padding: 2px 5px; border-radius: 2px; margin-bottom: 2px;
+    white-space: normal; word-break: break-word; line-height: 1.3; }
+  .cal-act.planned { background: rgba(0,245,255,0.12); border: 1px solid rgba(0,245,255,0.3); color: var(--cyan); }
+  .cal-act.actual  { background: rgba(255,0,255,0.12); border: 1px solid rgba(255,0,255,0.3); color: var(--magenta); }
+
+  /* Feedback */
+  .log-entry { background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--cyan); border-radius: 0 6px 6px 0; padding: 14px 18px; margin-bottom: 12px; }
+  .log-entry.achievement { border-left-color: var(--gold); }
+  .log-entry.goal { border-left-color: var(--magenta); }
+  .log-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .log-date { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 2px; color: var(--cyan); }
+  .log-type { font-size: 0.65rem; padding: 2px 8px; border-radius: 2px; }
+  .type-feedback    { background: rgba(0,245,255,0.1); color: var(--cyan); border: 1px solid rgba(0,245,255,0.3); }
+  .type-achievement { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.35); }
+  .type-goal        { background: rgba(255,0,255,0.1); color: var(--magenta); border: 1px solid rgba(255,0,255,0.3); }
+  .log-source { color: var(--muted); font-size: 0.8rem; margin-bottom: 5px; }
+  .log-details { font-size: 0.88rem; line-height: 1.6; margin-bottom: 4px; }
+  .log-action { color: var(--gold); font-size: 0.82rem; }
+
+  /* Performance */
+  .perf-score-ring { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; }
+  .score-circle { width: 80px; height: 80px; border-radius: 50%;
+    border: 3px solid var(--cyan); display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', monospace; font-size: 1.8rem; color: var(--cyan);
+    box-shadow: 0 0 20px rgba(0,245,255,0.2); flex-shrink: 0; }
+  .score-label { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 2px; color: var(--muted); }
+  .score-notes { font-size: 0.88rem; line-height: 1.7; color: var(--text); }
+
+  /* Reflections */
+  .refl-entry { background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 18px 20px; margin-bottom: 14px; }
+  .refl-date { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 2px;
+    color: var(--cyan); margin-bottom: 10px; }
+  .refl-text { font-size: 0.9rem; line-height: 1.8; white-space: pre-wrap; }
+
+  /* Empty state */
+  .empty { color: var(--muted); font-size: 0.88rem; font-style: italic; padding: 24px 0; }
+
+  /* Loading */
+  #loading { display: flex; align-items: center; justify-content: center; min-height: 60vh;
+    font-family: 'Orbitron', monospace; font-size: 0.8rem; letter-spacing: 4px; color: var(--muted); }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-btn { background: none; border: 1px solid var(--border); color: var(--muted);
+    font-size: 0.72rem; padding: 5px 14px; border-radius: 3px; cursor: pointer; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.06); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Development Passport</h1>
+    <div class="sub">PUBLIC VIEWER · SAPAPCN</div>
+  </div>
+  <div class="sync-badge" id="sync-badge">LOADING…</div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('calendar')">📅 Calendar</button>
+  <button onclick="showTab('performance')">📈 Performance</button>
+  <button onclick="showTab('feedback')">📝 Feedback</button>
+  <button onclick="showTab('reflections')">✍️ Reflections</button>
+</nav>
+
+<main>
+  <div id="loading">LOADING DATA…</div>
+
+  <div id="content" style="display:none;">
+
+    <!-- CALENDAR -->
+    <div class="section active" id="tab-calendar">
+      <div class="section-title">Activity Calendar</div>
+      <div class="cal-nav">
+        <button onclick="calPrev()">◀ PREV</button>
+        <h2 id="cal-label"></h2>
+        <button onclick="calNext()">NEXT ▶</button>
+      </div>
+      <div class="cal-legend">
+        <span><span class="dot cal-dot-planned"></span> Planned</span>
+        <span><span class="dot cal-dot-actual"></span> Actual</span>
+      </div>
+      <div class="cal-grid" id="cal-dow">
+        <div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUE</div>
+        <div class="cal-dow">WED</div><div class="cal-dow">THU</div><div class="cal-dow">FRI</div>
+        <div class="cal-dow">SAT</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+
+    <!-- PERFORMANCE -->
+    <div class="section" id="tab-performance">
+      <div class="section-title">Performance</div>
+      <div class="card">
+        <div class="perf-score-ring">
+          <div class="score-circle" id="perf-score-val">—</div>
+          <div>
+            <div class="score-label">PERFORMANCE SCORE</div>
+            <div id="perf-date" style="font-size:0.78rem; color:var(--muted); margin-top:4px;"></div>
+          </div>
+        </div>
+        <div class="score-notes" id="perf-notes"></div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div class="section" id="tab-feedback">
+      <div class="section-title">Feedback & Achievements</div>
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterFeedback('all', this)">All</button>
+        <button class="filter-btn" onclick="filterFeedback('feedback', this)">Feedback</button>
+        <button class="filter-btn" onclick="filterFeedback('achievement', this)">Achievements</button>
+        <button class="filter-btn" onclick="filterFeedback('goal', this)">Goal Updates</button>
+      </div>
+      <div id="feedback-list"></div>
+    </div>
+
+    <!-- REFLECTIONS -->
+    <div class="section" id="tab-reflections">
+      <div class="section-title">Reflection Log</div>
+      <div id="reflections-list"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const DATA_URL = 'data.json?v=' + Date.now();
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let passport = null;
+let calYear, calMonth, feedFilter = 'all';
+
+async function loadPassport() {
+  try {
+    const res = await fetch(DATA_URL);
+    if (!res.ok) throw new Error('Not found');
+    passport = await res.json();
+    const d = new Date();
+    calYear = d.getFullYear(); calMonth = d.getMonth();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    document.getElementById('sync-badge').textContent = 'UPDATED: ' + new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}).toUpperCase();
+    renderCalendar();
+    renderPerformance();
+    renderFeedback();
+    renderReflections();
+  } catch(e) {
+    document.getElementById('loading').textContent = 'No data available yet — check back soon.';
+  }
+}
+
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ── Calendar ──────────────────────────────────────────────────────────────────
+function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+
+function renderCalendar() {
+  document.getElementById('cal-label').textContent = MONTHS[calMonth] + ' ' + calYear;
+  const cal = passport.calendar || {};
+  const today = new Date();
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const grid = document.getElementById('cal-grid');
+  let html = '';
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+  for (let i = 0; i < totalCells; i++) {
+    let day, month, year, other = false;
+    if (i < firstDay) { day = daysInPrev - firstDay + i + 1; month = calMonth - 1; year = calYear; other = true; }
+    else if (i < firstDay + daysInMonth) { day = i - firstDay + 1; month = calMonth; year = calYear; }
+    else { day = i - firstDay - daysInMonth + 1; month = calMonth + 1; year = calYear; other = true; }
+    const m = ((month % 12) + 12) % 12;
+    const y = month < 0 ? year - 1 : month > 11 ? year + 1 : year;
+    const key = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday = !other && day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+    const acts = cal[key] || [];
+    html += `<div class="cal-cell${other?' other-month':''}${isToday?' today':''}">
+      <div class="cal-num">${day}</div>
+      ${acts.map(a => `<div class="cal-act ${a.type}">${escHtml(a.title)}</div>`).join('')}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// ── Performance ───────────────────────────────────────────────────────────────
+function renderPerformance() {
+  const p = passport.performance || {};
+  document.getElementById('perf-score-val').textContent = p.score != null ? p.score : '—';
+  document.getElementById('perf-date').textContent = p.date || '';
+  document.getElementById('perf-notes').textContent = p.notes || 'No notes added yet.';
+}
+
+// ── Feedback ──────────────────────────────────────────────────────────────────
+function filterFeedback(f, btn) {
+  feedFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeedback();
+}
+
+function renderFeedback() {
+  const log = (passport.feedbackLog || []).slice().reverse();
+  const filtered = feedFilter === 'all' ? log : log.filter(e => e.type === feedFilter);
+  const typeLabel = { feedback: 'Feedback', achievement: 'Achievement', goal: 'Goal Update' };
+  const el = document.getElementById('feedback-list');
+  if (!filtered.length) { el.innerHTML = '<div class="empty">No entries yet.</div>'; return; }
+  el.innerHTML = filtered.map(e => `
+    <div class="log-entry ${e.type}">
+      <div class="log-meta">
+        <span class="log-date">${e.date || ''}</span>
+        <span class="log-type type-${e.type}">${typeLabel[e.type] || e.type}</span>
+      </div>
+      ${e.source ? `<div class="log-source">📌 ${escHtml(e.source)}</div>` : ''}
+      <div class="log-details">${escHtml(e.details)}</div>
+      ${e.action ? `<div class="log-action">→ ${escHtml(e.action)}</div>` : ''}
+    </div>`).join('');
+}
+
+// ── Reflections ───────────────────────────────────────────────────────────────
+function renderReflections() {
+  const refs = (passport.reflections || []).slice().reverse();
+  const el = document.getElementById('reflections-list');
+  if (!refs.length) { el.innerHTML = '<div class="empty">No reflections added yet.</div>'; return; }
+  el.innerHTML = refs.map(r => `
+    <div class="refl-entry">
+      <div class="refl-date">${r.date}</div>
+      <div class="refl-text">${escHtml(r.text)}</div>
+    </div>`).join('');
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadPassport();
+</script>
+</body>
+</html>

@@ -828,15 +828,20 @@
             <div id="end-stats" style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin:24px 0;"></div>
 
             <div class="card" style="max-width:580px; margin:20px auto; text-align:left;">
-                <h3>Reflection Note</h3>
-                <textarea id="reflection" placeholder="Write a reflection on your journey so far…" style="min-height:120px;"></textarea>
-                <button class="btn btn-primary" style="margin-top:10px;" onclick="saveReflection()">Save Reflection</button>
+                <h3>Reflection Log</h3>
+                <div id="reflection-log" style="margin-bottom:16px;"></div>
+                <div class="form-group">
+                    <label>New Reflection</label>
+                    <textarea id="reflection-new" placeholder="Write a reflection on your journey so far…" style="min-height:100px;"></textarea>
+                </div>
+                <button class="btn btn-primary" style="margin-top:6px;" onclick="addReflection()">Add Reflection</button>
             </div>
 
             <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
                 <button class="btn btn-primary" onclick="saveAsPDF()">📄 Save as PDF</button>
                 <button class="btn btn-secondary" onclick="exportJSON()">📥 Export as JSON</button>
                 <button class="btn btn-secondary" onclick="document.getElementById('import-input').click()">📤 Import JSON</button>
+                <button class="btn btn-secondary" onclick="openGHTokenModal()" title="Set GitHub token to auto-sync with public viewer">☁️ Connect to Viewer</button>
             </div>
             <input type="file" id="import-input" accept=".json" style="display:none;" onchange="importJSON(event)">
             <p style="color:#8899aa; font-size:0.8rem; margin-top:12px;">Share your exported JSON file with others — they click Import to load your progress instantly.</p>
@@ -940,7 +945,7 @@ let data = {
     ],
     performance: { score:5, date:'', notes:'' },
     feedbackLog: [],
-    reflection: '',
+    reflections: [],
     completedSections: {},
     calendar: {}
 };
@@ -952,6 +957,13 @@ function loadData() {
         try {
             const parsed = JSON.parse(saved);
             data = { ...data, ...parsed };
+            // migrate old single reflection string to array
+            if (typeof data.reflection === 'string' && data.reflection.trim()) {
+                if (!data.reflections) data.reflections = [];
+                if (!data.reflections.length) data.reflections.push({ date: new Date().toISOString().slice(0,10), text: data.reflection });
+                delete data.reflection;
+            }
+            if (!data.reflections) data.reflections = [];
             // ensure 3 ai slots
             while (data.ai.length < 3) data.ai.push({ title:'', problem:'', approach:'', outcome:'' });
             // migrate swot from old string format to arrays
@@ -999,6 +1011,7 @@ function saveData() {
     localStorage.setItem('selfDevPassport_v2', JSON.stringify(data));
     showNotification('✅ Saved!');
     renderDashboardStats();
+    pushToGitHub();
 }
 
 function collectFormData(section) {
@@ -1775,9 +1788,39 @@ function updateEndPage() {
         </div>`).join('');
 }
 
-function saveReflection() {
-    data.reflection = document.getElementById('reflection')?.value || '';
+function addReflection() {
+    const text = (document.getElementById('reflection-new')?.value || '').trim();
+    if (!text) return;
+    if (!data.reflections) data.reflections = [];
+    data.reflections.push({ date: new Date().toISOString().slice(0,10), text });
+    document.getElementById('reflection-new').value = '';
+    renderReflectionLog();
     saveData();
+}
+
+function removeReflection(i) {
+    confirmDelete('Delete this reflection entry?', () => {
+        data.reflections.splice(i, 1);
+        renderReflectionLog();
+        saveData();
+    });
+}
+
+function renderReflectionLog() {
+    const log = document.getElementById('reflection-log');
+    if (!log) return;
+    if (!data.reflections || !data.reflections.length) {
+        log.innerHTML = '<p style="color:#8899aa; font-size:0.88rem;">No reflections yet. Add your first one below.</p>';
+        return;
+    }
+    log.innerHTML = [...data.reflections].reverse().map((r, revIdx) => {
+        const idx = data.reflections.length - 1 - revIdx;
+        return `<div style="background:rgba(255,255,255,0.04); border:1px solid rgba(0,245,255,0.12); border-radius:6px; padding:14px 16px; margin-bottom:10px; position:relative;">
+            <div style="font-family:'Orbitron',monospace; font-size:0.65rem; letter-spacing:2px; color:var(--cyan); margin-bottom:8px;">${r.date}</div>
+            <div style="line-height:1.7; white-space:pre-wrap; font-size:0.88rem;">${escHtml(r.text)}</div>
+            <button onclick="removeReflection(${idx})" style="position:absolute; top:10px; right:10px; background:none; border:none; color:#ff3c64; cursor:pointer; font-size:0.75rem; opacity:0.6;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">✕</button>
+        </div>`;
+    }).join('');
 }
 
 const PDF_SECTIONS = [
@@ -2214,6 +2257,47 @@ function exportJSON() {
     showNotification('📥 Exported!');
 }
 
+// ── GitHub auto-sync ──────────────────────────────────────────────────────────
+const GH_REPO  = 'sapapcn/self-development-passport';
+const GH_FILE  = 'data.json';
+
+function getGHToken() { return localStorage.getItem('ghSyncToken') || ''; }
+
+function openGHTokenModal() {
+    const current = getGHToken();
+    const val = prompt('Paste your GitHub fine-grained token (stored only in this browser):\n\nNeeded once to auto-sync with the public viewer.', current || '');
+    if (val !== null) {
+        localStorage.setItem('ghSyncToken', val.trim());
+        showNotification('🔑 Token saved — syncing now…');
+        pushToGitHub();
+    }
+}
+
+async function pushToGitHub() {
+    const token = getGHToken();
+    if (!token) return;
+    try {
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+        const headers = { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' };
+        const api = `https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`;
+        let sha;
+        const get = await fetch(api, { headers });
+        if (get.ok) { const j = await get.json(); sha = j.sha; }
+        const body = { message: 'sync: update passport data', content, ...(sha ? { sha } : {}) };
+        const put = await fetch(api, { method: 'PUT', headers, body: JSON.stringify(body) });
+        if (put.ok) {
+            showNotification('☁️ Synced to viewer!');
+        } else {
+            const err = await put.json();
+            console.warn('GitHub sync error:', err.message);
+            if (put.status === 401 || put.status === 403) showNotification('⚠️ Sync failed — check your token');
+        }
+    } catch(e) {
+        console.warn('GitHub sync failed:', e);
+    }
+}
+
+
 // ── Render all ────────────────────────────────────────────────────────────────
 function renderAll() {
     renderNetwork();
@@ -2231,6 +2315,7 @@ function renderAll() {
     renderPerformance();
     initCal();
     renderCalendar();
+    renderReflectionLog();
     updateNavChecks();
     updateDashboardProgress();
     renderDashboardStats();
