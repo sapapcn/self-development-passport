@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alexis Phoebe — Development Viewer</title>
+<title>Phoebe Ngitngit — Development Passport</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -12,132 +12,242 @@
     --text: #e8e8f0; --muted: #8899aa;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  /* Animated background grid */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0;
+    background-image: linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridScroll 20s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes gridScroll { from { background-position: 0 0; } to { background-position: 40px 40px; } }
+
+  /* Glowing orbs */
+  .orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.12; pointer-events: none; z-index: 0; animation: orbFloat 8s ease-in-out infinite; }
+  .orb1 { width: 400px; height: 400px; background: var(--cyan); top: -100px; left: -100px; animation-delay: 0s; }
+  .orb2 { width: 300px; height: 300px; background: var(--magenta); bottom: -80px; right: -80px; animation-delay: 3s; }
+  .orb3 { width: 200px; height: 200px; background: var(--gold); top: 50%; left: 50%; animation-delay: 5s; }
+  @keyframes orbFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
 
   header {
-    background: rgba(6,6,22,0.95); border-bottom: 1px solid var(--border);
-    padding: 20px 32px; display: flex; align-items: center; gap: 16px;
-    position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(6,6,22,0.85); border-bottom: 1px solid var(--border);
+    padding: 16px 32px; display: flex; align-items: center; gap: 16px;
+    backdrop-filter: blur(20px);
   }
-  header h1 { font-family: 'Orbitron', monospace; font-size: 1rem; letter-spacing: 3px; color: var(--cyan); }
-  header .sub { font-size: 0.72rem; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
-  .sync-badge { margin-left: auto; font-size: 0.68rem; font-family: 'Orbitron', monospace;
-    letter-spacing: 2px; color: var(--muted); }
+  .header-left { display: flex; flex-direction: column; }
+  header h1 {
+    font-family: 'Orbitron', monospace; font-size: 1.05rem; letter-spacing: 3px;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  @keyframes shimmer { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
+  header .sub { font-size: 0.68rem; color: var(--muted); letter-spacing: 3px; margin-top: 2px; text-transform: uppercase; }
+  .sync-badge {
+    margin-left: auto; font-size: 0.62rem; font-family: 'Orbitron', monospace;
+    letter-spacing: 2px; color: var(--muted); background: rgba(0,245,255,0.06);
+    border: 1px solid var(--border); padding: 4px 12px; border-radius: 3px;
+  }
+  .pulse-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--cyan); margin-right: 6px; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
 
-  nav { display: flex; gap: 4px; padding: 16px 32px; border-bottom: 1px solid var(--border);
-    background: rgba(6,6,22,0.7); flex-wrap: wrap; }
-  nav button { background: none; border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Orbitron', monospace; font-size: 0.62rem; letter-spacing: 2px;
-    padding: 8px 16px; border-radius: 3px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
-  nav button:hover, nav button.active { border-color: var(--cyan); color: var(--cyan);
-    background: rgba(0,245,255,0.06); }
+  nav {
+    display: flex; gap: 4px; padding: 14px 32px; border-bottom: 1px solid var(--border);
+    background: rgba(6,6,22,0.6); flex-wrap: wrap; position: relative; z-index: 10;
+    backdrop-filter: blur(10px);
+  }
+  nav button {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Orbitron', monospace; font-size: 0.6rem; letter-spacing: 2px;
+    padding: 8px 18px; border-radius: 3px; cursor: pointer;
+    transition: all 0.25s; text-transform: uppercase; position: relative; overflow: hidden;
+  }
+  nav button::after {
+    content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,245,255,0.1), transparent);
+    opacity: 0; transition: opacity 0.25s;
+  }
+  nav button:hover::after, nav button.active::after { opacity: 1; }
+  nav button:hover, nav button.active { border-color: var(--cyan); color: var(--cyan); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,245,255,0.15); }
 
-  main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 36px 24px; position: relative; z-index: 1; }
 
   .section { display: none; }
-  .section.active { display: block; }
+  .section.active { display: block; animation: fadeUp 0.4s ease forwards; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-  .section-title { font-family: 'Orbitron', monospace; font-size: 0.72rem; letter-spacing: 4px;
-    color: var(--cyan); text-transform: uppercase; margin-bottom: 24px; opacity: 0.8;
-    border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+  .section-title {
+    font-family: 'Orbitron', monospace; font-size: 0.7rem; letter-spacing: 4px;
+    color: var(--cyan); text-transform: uppercase; margin-bottom: 28px;
+    border-bottom: 1px solid var(--border); padding-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::before { content: '▸'; color: var(--magenta); animation: blink 1.5s ease-in-out infinite; }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
 
-  .card { background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px 24px; margin-bottom: 16px;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .card:hover { border-color: rgba(0,245,255,0.25); box-shadow: 0 4px 24px rgba(0,245,255,0.08); }
 
   /* Calendar */
   .cal-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-  .cal-nav button { background: none; border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Orbitron', monospace; font-size: 0.65rem; padding: 6px 14px;
-    border-radius: 3px; cursor: pointer; letter-spacing: 2px; }
-  .cal-nav button:hover { border-color: var(--cyan); color: var(--cyan); }
-  .cal-nav h2 { font-family: 'Orbitron', monospace; font-size: 0.85rem; letter-spacing: 3px; color: var(--text); }
+  .cal-nav button {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Orbitron', monospace; font-size: 0.62rem; padding: 7px 16px;
+    border-radius: 3px; cursor: pointer; letter-spacing: 2px; transition: all 0.2s;
+  }
+  .cal-nav button:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 12px rgba(0,245,255,0.15); }
+  .cal-nav h2 { font-family: 'Orbitron', monospace; font-size: 0.88rem; letter-spacing: 3px; color: var(--text); }
   .cal-legend { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
   .cal-legend span { font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
   .cal-legend .dot { width: 10px; height: 10px; border-radius: 2px; }
   .cal-dot-planned { background: rgba(0,245,255,0.3); border: 1px solid var(--cyan); }
   .cal-dot-actual  { background: rgba(255,0,255,0.3); border: 1px solid var(--magenta); }
+  .cal-header-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 4px; }
+  .cal-dow { text-align: center; font-family: 'Orbitron', monospace; font-size: 0.52rem; letter-spacing: 2px; color: var(--muted); padding: 6px 0; }
   .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
-  .cal-dow  { text-align: center; font-family: 'Orbitron', monospace; font-size: 0.55rem;
-    letter-spacing: 2px; color: var(--muted); padding: 6px 0; }
-  .cal-cell { min-height: 72px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 4px; padding: 5px; position: relative; }
-  .cal-cell.today { border-color: rgba(0,245,255,0.4); background: rgba(0,245,255,0.04); }
-  .cal-cell.other-month { opacity: 0.3; }
-  .cal-num { font-size: 0.65rem; color: var(--muted); margin-bottom: 3px; font-family: 'Orbitron', monospace; }
-  .cal-act { font-size: 0.6rem; padding: 2px 5px; border-radius: 2px; margin-bottom: 2px;
-    white-space: normal; word-break: break-word; line-height: 1.3; }
+  .cal-cell {
+    min-height: 72px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px; padding: 5px; position: relative; transition: all 0.2s;
+  }
+  .cal-cell:hover { background: rgba(255,255,255,0.05); border-color: rgba(0,245,255,0.2); }
+  .cal-cell.today { border-color: rgba(0,245,255,0.5); background: rgba(0,245,255,0.04); box-shadow: 0 0 12px rgba(0,245,255,0.1) inset; }
+  .cal-cell.other-month { opacity: 0.25; }
+  .cal-cell.has-activity { animation: cellGlow 3s ease-in-out infinite; }
+  @keyframes cellGlow { 0%,100% { box-shadow: none; } 50% { box-shadow: 0 0 8px rgba(0,245,255,0.12); } }
+  .cal-num { font-size: 0.62rem; color: var(--muted); margin-bottom: 3px; font-family: 'Orbitron', monospace; }
+  .cal-act { font-size: 0.58rem; padding: 2px 5px; border-radius: 2px; margin-bottom: 2px; white-space: normal; word-break: break-word; line-height: 1.3; }
   .cal-act.planned { background: rgba(0,245,255,0.12); border: 1px solid rgba(0,245,255,0.3); color: var(--cyan); }
   .cal-act.actual  { background: rgba(255,0,255,0.12); border: 1px solid rgba(255,0,255,0.3); color: var(--magenta); }
 
+  /* Performance */
+  .perf-score-ring { display: flex; align-items: center; gap: 28px; margin-bottom: 20px; }
+  .score-circle {
+    width: 90px; height: 90px; border-radius: 50%; flex-shrink: 0;
+    border: 3px solid var(--cyan); display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', monospace; font-size: 2rem; color: var(--cyan);
+    box-shadow: 0 0 30px rgba(0,245,255,0.25), 0 0 60px rgba(0,245,255,0.1);
+    animation: scoreGlow 3s ease-in-out infinite;
+  }
+  @keyframes scoreGlow { 0%,100% { box-shadow: 0 0 20px rgba(0,245,255,0.2), 0 0 40px rgba(0,245,255,0.08); } 50% { box-shadow: 0 0 40px rgba(0,245,255,0.4), 0 0 80px rgba(0,245,255,0.15); } }
+  .score-label { font-family: 'Orbitron', monospace; font-size: 0.62rem; letter-spacing: 3px; color: var(--muted); margin-bottom: 6px; }
+  .score-notes { font-size: 0.88rem; line-height: 1.7; color: var(--text); }
+
   /* Feedback */
-  .log-entry { background: var(--surface); border: 1px solid var(--border);
-    border-left: 3px solid var(--cyan); border-radius: 0 6px 6px 0; padding: 14px 18px; margin-bottom: 12px; }
+  .log-entry {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--cyan); border-radius: 0 8px 8px 0;
+    padding: 16px 20px; margin-bottom: 14px;
+    transition: all 0.25s; animation: fadeUp 0.4s ease both;
+  }
+  .log-entry:hover { transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,245,255,0.08); }
   .log-entry.achievement { border-left-color: var(--gold); }
+  .log-entry.achievement:hover { box-shadow: 0 4px 20px rgba(201,168,76,0.1); }
   .log-entry.goal { border-left-color: var(--magenta); }
+  .log-entry.goal:hover { box-shadow: 0 4px 20px rgba(255,0,255,0.08); }
   .log-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-  .log-date { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 2px; color: var(--cyan); }
-  .log-type { font-size: 0.65rem; padding: 2px 8px; border-radius: 2px; }
+  .log-date { font-family: 'Orbitron', monospace; font-size: 0.62rem; letter-spacing: 2px; color: var(--cyan); }
+  .log-type { font-size: 0.62rem; padding: 2px 9px; border-radius: 2px; }
   .type-feedback    { background: rgba(0,245,255,0.1); color: var(--cyan); border: 1px solid rgba(0,245,255,0.3); }
   .type-achievement { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.35); }
   .type-goal        { background: rgba(255,0,255,0.1); color: var(--magenta); border: 1px solid rgba(255,0,255,0.3); }
-  .log-source { color: var(--muted); font-size: 0.8rem; margin-bottom: 5px; }
+  .log-source { color: var(--muted); font-size: 0.8rem; margin-bottom: 6px; }
   .log-details { font-size: 0.88rem; line-height: 1.6; margin-bottom: 4px; }
-  .log-action { color: var(--gold); font-size: 0.82rem; }
-
-  /* Performance */
-  .perf-score-ring { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; }
-  .score-circle { width: 80px; height: 80px; border-radius: 50%;
-    border: 3px solid var(--cyan); display: flex; align-items: center; justify-content: center;
-    font-family: 'Orbitron', monospace; font-size: 1.8rem; color: var(--cyan);
-    box-shadow: 0 0 20px rgba(0,245,255,0.2); flex-shrink: 0; }
-  .score-label { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 2px; color: var(--muted); }
-  .score-notes { font-size: 0.88rem; line-height: 1.7; color: var(--text); }
+  .log-action { color: var(--gold); font-size: 0.82rem; margin-top: 6px; }
 
   /* Reflections */
-  .refl-entry { background: var(--surface); border: 1px solid var(--border);
-    border-radius: 6px; padding: 18px 20px; margin-bottom: 14px; }
-  .refl-date { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 2px;
-    color: var(--cyan); margin-bottom: 10px; }
-  .refl-text { font-size: 0.9rem; line-height: 1.8; white-space: pre-wrap; }
+  .refl-entry {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px 24px; margin-bottom: 16px;
+    position: relative; overflow: hidden; transition: all 0.25s;
+    animation: fadeUp 0.4s ease both;
+  }
+  .refl-entry::before {
+    content: '"'; position: absolute; top: -10px; left: 16px;
+    font-size: 5rem; color: rgba(0,245,255,0.06); font-family: Georgia, serif; line-height: 1;
+    pointer-events: none;
+  }
+  .refl-entry:hover { border-color: rgba(0,245,255,0.25); box-shadow: 0 4px 24px rgba(0,245,255,0.08); }
+  .refl-date { font-family: 'Orbitron', monospace; font-size: 0.62rem; letter-spacing: 2px; color: var(--cyan); margin-bottom: 12px; }
+  .refl-text { font-size: 0.9rem; line-height: 1.85; white-space: pre-wrap; position: relative; z-index: 1; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .filter-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    font-size: 0.7rem; padding: 6px 16px; border-radius: 3px; cursor: pointer; transition: all 0.2s;
+  }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.06); }
+
+  /* Stats bar */
+  .stats-bar { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .stat-pill {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    padding: 10px 18px; display: flex; flex-direction: column; align-items: center; min-width: 90px;
+    transition: all 0.25s;
+  }
+  .stat-pill:hover { border-color: rgba(0,245,255,0.3); box-shadow: 0 0 16px rgba(0,245,255,0.1); }
+  .stat-num { font-family: 'Orbitron', monospace; font-size: 1.4rem; color: var(--cyan); animation: countUp 1s ease; }
+  @keyframes countUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .stat-lbl { font-size: 0.6rem; color: var(--muted); letter-spacing: 1px; margin-top: 2px; text-transform: uppercase; }
 
   /* Empty state */
-  .empty { color: var(--muted); font-size: 0.88rem; font-style: italic; padding: 24px 0; }
+  .empty { color: var(--muted); font-size: 0.88rem; font-style: italic; padding: 32px 0; text-align: center; }
 
   /* Loading */
-  #loading { display: flex; align-items: center; justify-content: center; min-height: 60vh;
-    font-family: 'Orbitron', monospace; font-size: 0.8rem; letter-spacing: 4px; color: var(--muted); }
-
-  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-  .filter-btn { background: none; border: 1px solid var(--border); color: var(--muted);
-    font-size: 0.72rem; padding: 5px 14px; border-radius: 3px; cursor: pointer; }
-  .filter-btn:hover, .filter-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.06); }
+  #loading {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 60vh; gap: 20px; position: relative; z-index: 1;
+  }
+  .loader-ring {
+    width: 60px; height: 60px; border-radius: 50%;
+    border: 2px solid rgba(0,245,255,0.1); border-top-color: var(--cyan);
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 4px; color: var(--muted); }
 </style>
 </head>
 <body>
 
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
 <header>
-  <div>
-    <h1>Development Passport</h1>
-    <div class="sub">PUBLIC VIEWER · SAPAPCN</div>
+  <div class="header-left">
+    <h1>Phoebe Ngitngit</h1>
+    <div class="sub">Self-Development Passport · Live View</div>
   </div>
-  <div class="sync-badge" id="sync-badge">LOADING…</div>
+  <div class="sync-badge" id="sync-badge"><span class="pulse-dot"></span>LOADING</div>
 </header>
 
 <nav>
-  <button class="active" onclick="showTab('calendar')">📅 Calendar</button>
-  <button onclick="showTab('performance')">📈 Performance</button>
-  <button onclick="showTab('feedback')">📝 Feedback</button>
-  <button onclick="showTab('reflections')">✍️ Reflections</button>
+  <button class="active" onclick="showTab('calendar', this)">📅 Calendar</button>
+  <button onclick="showTab('performance', this)">📈 Performance</button>
+  <button onclick="showTab('feedback', this)">📝 Feedback</button>
+  <button onclick="showTab('reflections', this)">✍️ Reflections</button>
 </nav>
 
 <main>
-  <div id="loading">LOADING DATA…</div>
+  <div id="loading">
+    <div class="loader-ring"></div>
+    <div class="loader-text">LOADING DATA…</div>
+  </div>
 
   <div id="content" style="display:none;">
 
     <!-- CALENDAR -->
     <div class="section active" id="tab-calendar">
       <div class="section-title">Activity Calendar</div>
+      <div class="stats-bar" id="cal-stats"></div>
       <div class="cal-nav">
         <button onclick="calPrev()">◀ PREV</button>
         <h2 id="cal-label"></h2>
@@ -147,7 +257,7 @@
         <span><span class="dot cal-dot-planned"></span> Planned</span>
         <span><span class="dot cal-dot-actual"></span> Actual</span>
       </div>
-      <div class="cal-grid" id="cal-dow">
+      <div class="cal-header-grid">
         <div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUE</div>
         <div class="cal-dow">WED</div><div class="cal-dow">THU</div><div class="cal-dow">FRI</div>
         <div class="cal-dow">SAT</div>
@@ -162,7 +272,7 @@
         <div class="perf-score-ring">
           <div class="score-circle" id="perf-score-val">—</div>
           <div>
-            <div class="score-label">PERFORMANCE SCORE</div>
+            <div class="score-label">Performance Score / 10</div>
             <div id="perf-date" style="font-size:0.78rem; color:var(--muted); margin-top:4px;"></div>
           </div>
         </div>
@@ -173,6 +283,7 @@
     <!-- FEEDBACK -->
     <div class="section" id="tab-feedback">
       <div class="section-title">Feedback & Achievements</div>
+      <div class="stats-bar" id="feedback-stats"></div>
       <div class="filter-bar">
         <button class="filter-btn active" onclick="filterFeedback('all', this)">All</button>
         <button class="filter-btn" onclick="filterFeedback('feedback', this)">Feedback</button>
@@ -185,6 +296,7 @@
     <!-- REFLECTIONS -->
     <div class="section" id="tab-reflections">
       <div class="section-title">Reflection Log</div>
+      <div class="stats-bar" id="refl-stats"></div>
       <div id="reflections-list"></div>
     </div>
 
@@ -192,35 +304,69 @@
 </main>
 
 <script>
-const DATA_URL = 'data.json?v=' + Date.now();
+// Bypass GitHub Pages cache by fetching raw from GitHub with a timestamp
+const RAW_URL = 'https://raw.githubusercontent.com/sapapcn/self-development-passport/main/data.json';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 let passport = null;
 let calYear, calMonth, feedFilter = 'all';
 
 async function loadPassport() {
   try {
-    const res = await fetch(DATA_URL);
+    const res = await fetch(RAW_URL + '?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('Not found');
     passport = await res.json();
     const d = new Date();
     calYear = d.getFullYear(); calMonth = d.getMonth();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
-    document.getElementById('sync-badge').textContent = 'UPDATED: ' + new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}).toUpperCase();
+    const badge = document.getElementById('sync-badge');
+    badge.innerHTML = '<span class="pulse-dot"></span>LIVE · ' + new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}).toUpperCase();
     renderCalendar();
+    renderCalStats();
     renderPerformance();
     renderFeedback();
+    renderFeedbackStats();
     renderReflections();
+    renderReflStats();
   } catch(e) {
-    document.getElementById('loading').textContent = 'No data available yet — check back soon.';
+    document.getElementById('loading').innerHTML = '<div class="loader-text" style="color:var(--muted)">No data available yet — check back soon.</div>';
   }
 }
 
-function showTab(id) {
+function showTab(id, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Stats pills ───────────────────────────────────────────────────────────────
+function statPill(num, label) {
+  return `<div class="stat-pill"><div class="stat-num">${num}</div><div class="stat-lbl">${label}</div></div>`;
+}
+
+function renderCalStats() {
+  const cal = passport.calendar || {};
+  const entries = Object.values(cal);
+  const total = entries.reduce((s,a) => s + a.length, 0);
+  const planned = entries.reduce((s,a) => s + a.filter(x => x.type==='planned').length, 0);
+  const actual  = entries.reduce((s,a) => s + a.filter(x => x.type==='actual').length, 0);
+  document.getElementById('cal-stats').innerHTML =
+    statPill(total, 'Total') + statPill(planned, 'Planned') + statPill(actual, 'Actual');
+}
+
+function renderFeedbackStats() {
+  const log = passport.feedbackLog || [];
+  const fb = log.filter(e => e.type==='feedback').length;
+  const ach = log.filter(e => e.type==='achievement').length;
+  const goal = log.filter(e => e.type==='goal').length;
+  document.getElementById('feedback-stats').innerHTML =
+    statPill(log.length, 'Total') + statPill(fb, 'Feedback') + statPill(ach, 'Achievements') + statPill(goal, 'Goals');
+}
+
+function renderReflStats() {
+  const refs = passport.reflections || [];
+  document.getElementById('refl-stats').innerHTML = statPill(refs.length, 'Entries');
 }
 
 // ── Calendar ──────────────────────────────────────────────────────────────────
@@ -247,7 +393,8 @@ function renderCalendar() {
     const key = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const isToday = !other && day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
     const acts = cal[key] || [];
-    html += `<div class="cal-cell${other?' other-month':''}${isToday?' today':''}">
+    const hasActs = acts.length > 0;
+    html += `<div class="cal-cell${other?' other-month':''}${isToday?' today':''}${hasActs?' has-activity':''}">
       <div class="cal-num">${day}</div>
       ${acts.map(a => `<div class="cal-act ${a.type}">${escHtml(a.title)}</div>`).join('')}
     </div>`;
@@ -259,7 +406,7 @@ function renderCalendar() {
 function renderPerformance() {
   const p = passport.performance || {};
   document.getElementById('perf-score-val').textContent = p.score != null ? p.score : '—';
-  document.getElementById('perf-date').textContent = p.date || '';
+  document.getElementById('perf-date').textContent = p.date ? 'As of ' + p.date : '';
   document.getElementById('perf-notes').textContent = p.notes || 'No notes added yet.';
 }
 
@@ -277,8 +424,8 @@ function renderFeedback() {
   const typeLabel = { feedback: 'Feedback', achievement: 'Achievement', goal: 'Goal Update' };
   const el = document.getElementById('feedback-list');
   if (!filtered.length) { el.innerHTML = '<div class="empty">No entries yet.</div>'; return; }
-  el.innerHTML = filtered.map(e => `
-    <div class="log-entry ${e.type}">
+  el.innerHTML = filtered.map((e, i) => `
+    <div class="log-entry ${e.type}" style="animation-delay:${i * 0.06}s">
       <div class="log-meta">
         <span class="log-date">${e.date || ''}</span>
         <span class="log-type type-${e.type}">${typeLabel[e.type] || e.type}</span>
@@ -294,8 +441,8 @@ function renderReflections() {
   const refs = (passport.reflections || []).slice().reverse();
   const el = document.getElementById('reflections-list');
   if (!refs.length) { el.innerHTML = '<div class="empty">No reflections added yet.</div>'; return; }
-  el.innerHTML = refs.map(r => `
-    <div class="refl-entry">
+  el.innerHTML = refs.map((r, i) => `
+    <div class="refl-entry" style="animation-delay:${i * 0.08}s">
       <div class="refl-date">${r.date}</div>
       <div class="refl-text">${escHtml(r.text)}</div>
     </div>`).join('');
