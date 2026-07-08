@@ -1,0 +1,2439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Development Passport</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;600;700&display=swap');
+
+        :root {
+            --cyan:    #00f5ff;
+            --magenta: #ff00ff;
+            --purple:  #7b2fff;
+            --dark1:   #020008;
+            --dark2:   #04000f;
+            --dark3:   #06001a;
+            --dark4:   #080022;
+            --text:    #e0e8ff;
+            --muted:   #5a5a8a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Exo 2', 'Segoe UI', sans-serif;
+            background: var(--dark1);
+            color: var(--text);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Metro grid background ── */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0;
+            background-image:
+                linear-gradient(rgba(0,245,255,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,245,255,0.04) 1px, transparent 1px),
+                linear-gradient(rgba(0,245,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,245,255,0.015) 1px, transparent 1px);
+            background-size: 80px 80px, 80px 80px, 20px 20px, 20px 20px;
+            pointer-events: none;
+        }
+
+        /* ── Metro line ambient traces ── */
+        body::after {
+            content: '';
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                linear-gradient(90deg, transparent 5%, rgba(0,245,255,0.04) 30%, rgba(0,245,255,0.06) 50%, rgba(0,245,255,0.04) 70%, transparent 95%) 0 22% / 100% 1px no-repeat,
+                linear-gradient(90deg, transparent 5%, rgba(255,0,255,0.04) 30%, rgba(255,0,255,0.06) 50%, rgba(255,0,255,0.04) 70%, transparent 95%) 0 55% / 100% 1px no-repeat,
+                linear-gradient(90deg, transparent 5%, rgba(123,47,255,0.04) 30%, rgba(123,47,255,0.06) 50%, rgba(123,47,255,0.04) 70%, transparent 95%) 0 78% / 100% 1px no-repeat;
+            pointer-events: none;
+        }
+
+        /* ── Sidebar — Metro Station Navigator ── */
+        .sidebar {
+            width: 260px;
+            background: rgba(4,6,18,0.98);
+            border-right: 1px solid rgba(0,245,255,0.15);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            box-shadow: 4px 0 40px rgba(0,0,0,0.6), 1px 0 0 rgba(0,245,255,0.06);
+        }
+        .sidebar-header {
+            text-align: center;
+            padding: 20px 16px 16px;
+            border-bottom: 1px solid rgba(0,245,255,0.1);
+            margin-bottom: 6px;
+        }
+        .sidebar-header .passport-icon { font-size: 2rem; margin-bottom: 8px; }
+        .sidebar-header h2 {
+            font-family: 'Orbitron', monospace;
+            color: var(--cyan); font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase;
+        }
+        .metro-lines-bar {
+            display: flex; gap: 4px; justify-content: center;
+            margin: 10px 0 6px;
+        }
+        .metro-line-chip {
+            height: 4px; width: 30px; border-radius: 2px;
+        }
+        .metro-line-chip.c { background: var(--cyan);    box-shadow: 0 0 6px rgba(0,245,255,0.7); }
+        .metro-line-chip.m { background: var(--magenta); box-shadow: 0 0 6px rgba(255,0,255,0.7); }
+        .metro-line-chip.p { background: var(--purple);  box-shadow: 0 0 6px rgba(123,47,255,0.7); }
+
+        /* ── Station stops ── */
+        .nav-item {
+            padding: 11px 18px 11px 44px;
+            cursor: pointer;
+            border-left: none;
+            transition: all 0.25s;
+            display: flex; align-items: center; gap: 10px; font-size: 0.86rem;
+            position: relative;
+        }
+        /* Connecting track line */
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            left: 23px; top: calc(50% + 7px); height: 100%;
+            width: 1px;
+            background: linear-gradient(180deg, rgba(0,245,255,0.18) 0%, rgba(123,47,255,0.18) 100%);
+            z-index: 0;
+        }
+        .nav-item:last-child::after { display: none; }
+        /* Station circle */
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 17px; top: 50%; transform: translateY(-50%);
+            width: 13px; height: 13px; border-radius: 50%;
+            background: var(--dark1);
+            border: 2px solid rgba(0,245,255,0.22);
+            transition: all 0.25s;
+            z-index: 1;
+        }
+        .nav-item:hover { background: rgba(0,245,255,0.05); color: var(--cyan); }
+        .nav-item:hover::before { border-color: var(--cyan); box-shadow: 0 0 7px rgba(0,245,255,0.5); background: rgba(0,245,255,0.1); }
+        .nav-item.active { background: rgba(0,245,255,0.08); color: var(--cyan); text-shadow: 0 0 8px rgba(0,245,255,0.5); }
+        .nav-item.active::before { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,245,255,0.7); }
+        .nav-number {
+            width: 22px; height: 22px; border-radius: 3px;
+            background: transparent; border: 1px solid rgba(0,245,255,0.18); color: var(--muted);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; font-weight: bold; flex-shrink: 0;
+            font-family: 'Orbitron', monospace; letter-spacing: 0;
+            transition: all 0.25s;
+        }
+        .nav-item.active .nav-number { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.08); }
+        .nav-item:hover .nav-number  { border-color: rgba(0,245,255,0.4); color: var(--cyan); }
+        .nav-check { margin-left: auto; color: #00ff88; font-size: 0.8rem; }
+
+        /* ── Main ── */
+        .main { margin-left: 260px; flex: 1; padding: 30px; position: relative; z-index: 1; }
+
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ── Page header — Transit Station Board ── */
+        .page-header {
+            margin-bottom: 24px;
+            padding: 18px 22px 16px;
+            background: rgba(4,6,18,0.7);
+            border: 1px solid rgba(0,245,255,0.1);
+            border-left: 3px solid var(--cyan);
+            border-radius: 0 6px 6px 0;
+            position: relative;
+        }
+        .page-header::before {
+            content: attr(data-code);
+            position: absolute; top: -9px; left: 20px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.55rem; letter-spacing: 4px; color: var(--cyan);
+            background: var(--dark1); padding: 0 8px; opacity: 0.7;
+        }
+        .page-header::after { display: none; }
+        .page-header h1 { font-family: 'Orbitron', monospace; color: var(--text); font-size: 1.2rem; letter-spacing: 2px; font-weight: 700; }
+        .page-header p { color: var(--muted); margin-top: 5px; font-size: 0.82rem; }
+
+        /* ── Cards — Transit Interchange Panels ── */
+        .card {
+            background: rgba(6,6,22,0.88);
+            border: 1px solid rgba(0,245,255,0.1);
+            border-top: 2px solid var(--cyan);
+            border-radius: 0 0 8px 8px;
+            padding: 22px 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+        .card:hover { border-color: rgba(0,245,255,0.22); box-shadow: 0 4px 28px rgba(0,0,0,0.6), inset 0 1px 0 rgba(0,245,255,0.04); }
+        .card h3 {
+            font-family: 'Orbitron', monospace;
+            color: var(--muted); margin-bottom: 16px; font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 3px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* ── Forms ── */
+        input[type="text"], input[type="date"], textarea, select {
+            width: 100%;
+            background: rgba(2,4,12,0.9);
+            border: 1px solid rgba(0,245,255,0.14);
+            color: var(--text); padding: 9px 12px; border-radius: 3px;
+            font-size: 0.88rem; margin-bottom: 12px; transition: all 0.2s;
+            font-family: 'Exo 2', sans-serif;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 1px rgba(0,245,255,0.1);
+        }
+        select option { background: #06060f; color: var(--text); }
+        textarea { resize: vertical; min-height: 80px; }
+        label { display: block; color: var(--muted); font-size: 0.68rem; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 2px; font-family: 'Orbitron', monospace; }
+        .form-group { margin-bottom: 14px; }
+
+        /* ── Buttons — Transit System Controls ── */
+        .btn { padding: 9px 20px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.84rem; font-weight: 700; transition: all 0.25s; letter-spacing: 1px; font-family: 'Orbitron', monospace; text-transform: uppercase; }
+        .btn-primary {
+            background: linear-gradient(135deg, #00f5ff, #ff00ff, #7b2fff);
+            background-size: 200% 200%;
+            color: #fff;
+            box-shadow: 0 0 14px rgba(0,245,255,0.3);
+            animation: btnShift 5s ease infinite;
+        }
+        @keyframes btnShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        .btn-primary:hover { box-shadow: 0 0 24px rgba(255,0,255,0.5); transform: translateY(-1px); }
+        .btn-secondary { background: transparent; border: 1px solid rgba(0,245,255,0.4); color: var(--cyan); box-shadow: none; border-radius: 4px; }
+        .btn-secondary:hover { background: rgba(0,245,255,0.07); border-color: var(--cyan); box-shadow: 0 0 12px rgba(0,245,255,0.2); }
+        .btn-danger { background: transparent; border: 1px solid rgba(255,60,100,0.4); color: #ff3c64; padding: 5px 10px; font-size: 0.72rem; }
+        .btn-danger:hover { background: rgba(255,60,100,0.1); border-color: #ff3c64; }
+
+        .section-save-bar { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0,245,255,0.1); }
+
+        /* ── Notification ── */
+        .save-notification {
+            position: fixed; bottom: 24px; right: 24px;
+            background: rgba(4,6,18,0.97);
+            border: 1px solid var(--cyan);
+            border-top: 2px solid var(--cyan);
+            border-radius: 0 0 4px 4px;
+            color: var(--cyan);
+            padding: 10px 20px;
+            font-weight: 600;
+            opacity: 0; transition: opacity 0.25s; z-index: 1000; pointer-events: none;
+            font-family: 'Orbitron', monospace; font-size: 0.75rem; letter-spacing: 2px;
+        }
+        .save-notification.show { opacity: 1; }
+
+        /* ── Grid layouts ── */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .progress-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 22px; }
+        .section-save-bar { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(0,245,255,0.07); }
+
+        /* ── Dashboard progress cards — Station Status Boards ── */
+        .progress-card {
+            background: rgba(6,6,22,0.85);
+            border: 1px solid rgba(0,245,255,0.1);
+            border-top: 2px solid rgba(0,245,255,0.4);
+            border-radius: 0 0 6px 6px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.25s;
+        }
+        .progress-card:hover { border-color: rgba(0,245,255,0.3); border-top-color: var(--cyan); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+        .progress-card .section-icon { font-size: 1.5rem; margin-bottom: 7px; }
+        .progress-card h4 { color: var(--text); font-size: 0.78rem; margin-bottom: 10px; letter-spacing: 0.5px; }
+        .progress-bar-container { background: rgba(255,255,255,0.05); border-radius: 0; height: 3px; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--cyan), var(--magenta)); border-radius: 0; transition: width 0.6s ease; }
+        .progress-label { font-size: 0.68rem; color: var(--muted); margin-top: 6px; font-family: 'Orbitron', monospace; letter-spacing: 1px; }
+
+        /* ── Skills ── */
+        .skill-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; padding: 9px 12px; background: rgba(4,6,18,0.6); border: 1px solid rgba(0,245,255,0.07); border-left: 2px solid rgba(0,245,255,0.2); border-radius: 0 4px 4px 0; }
+        .skill-name { flex: 1; font-size: 0.86rem; }
+        .star { cursor: pointer; font-size: 1.1rem; color: rgba(255,255,255,0.1); transition: all 0.15s; }
+        .star.active { color: var(--cyan); }
+
+        /* ── SWOT ── */
+        .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .swot-quadrant { background: rgba(4,6,18,0.7); border-radius: 0 0 6px 6px; padding: 14px; border: 1px solid rgba(255,255,255,0.05); border-top: 2px solid; }
+        .swot-quadrant h4 { margin-bottom: 10px; font-size: 0.72rem; font-family: 'Orbitron', sans-serif; letter-spacing: 2px; text-transform: uppercase; }
+        .swot-s { border-top-color: #00f5ff; } .swot-s h4 { color: #00f5ff; font-family:'Orbitron',monospace; }
+        .swot-w { border-top-color: #ff00ff; } .swot-w h4 { color: #ff00ff; font-family:'Orbitron',monospace; }
+        .swot-o { border-top-color: #7b2fff; } .swot-o h4 { color: #7b2fff; font-family:'Orbitron',monospace; }
+        .swot-t { border-top-color: #00aaff; } .swot-t h4 { color: #00aaff; font-family:'Orbitron',monospace; }
+        .swot-items { min-height: 40px; }
+        .swot-item { display:flex; align-items:flex-start; gap:8px; padding:5px 4px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.84rem; line-height:1.4; }
+        .swot-item:last-child { border-bottom: none; }
+        .swot-item .bullet { flex-shrink:0; margin-top:2px; font-size:0.7rem; opacity:0.7; }
+        .swot-item .item-text { flex:1; }
+        .swot-item .remove-btn { flex-shrink:0; background:none; border:none; color:rgba(255,60,100,0.5); cursor:pointer; font-size:0.85rem; padding:0 2px; line-height:1; transition:color 0.2s; }
+        .swot-item .remove-btn:hover { color:#ff3c64; }
+
+        /* ── Tables ── */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: rgba(2,4,12,0.9); color: var(--muted); padding: 9px 12px; text-align: left; font-weight: 700; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid rgba(0,245,255,0.12); font-family: 'Orbitron', monospace; }
+        td { padding: 9px 12px; border-bottom: 1px solid rgba(0,245,255,0.05); vertical-align: middle; }
+        tr:hover td { background: rgba(0,245,255,0.025); }
+
+        /* ── Network ── */
+        .network-item { display: flex; align-items: center; gap: 14px; padding: 11px 14px; background: rgba(4,6,18,0.6); border: 1px solid rgba(0,245,255,0.07); border-left: 2px solid rgba(0,245,255,0.2); border-radius: 0 4px 4px 0; margin-bottom: 7px; transition: border-color 0.25s; }
+        .network-item:hover { border-left-color: var(--cyan); }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--purple)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; flex-shrink: 0; }
+
+        /* ── Timeline — Metro Route Map ── */
+        .timeline { position: relative; padding-left: 28px; }
+        .timeline::before { content: ''; position: absolute; left: 9px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, var(--cyan), var(--magenta), var(--purple)); opacity: 0.4; }
+        .timeline-item { position: relative; margin-bottom: 16px; padding: 12px 14px; background: rgba(4,6,18,0.7); border: 1px solid rgba(0,245,255,0.08); border-left: 2px solid rgba(0,245,255,0.2); border-radius: 0 6px 6px 0; }
+        .timeline-item::before { content: ''; position: absolute; left: -22px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; border-radius: 50%; background: var(--dark1); border: 2px solid var(--cyan); box-shadow: 0 0 8px rgba(0,245,255,0.5); }
+        .timeline-phase { font-size: 0.7rem; color: var(--cyan); margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; font-family: 'Orbitron', monospace; }
+
+        /* ── Stakeholder bubbles ── */
+        .stakeholder-map { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+        .stakeholder-bubble { padding: 4px 12px; border-radius: 2px; font-size: 0.78rem; letter-spacing: 0.5px; }
+        .influence-high   { background: rgba(255,0,255,0.1);   border: 1px solid rgba(255,0,255,0.4); color: #ff00ff; }
+        .influence-medium { background: rgba(123,47,255,0.1);  border: 1px solid rgba(160,106,255,0.4); color: #a06aff; }
+        .influence-low    { background: rgba(0,245,255,0.08);  border: 1px solid rgba(0,245,255,0.3); color: var(--cyan); }
+
+        /* ── Mentor cards ── */
+        .mentor-card { background: rgba(4,6,18,0.7); border: 1px solid rgba(0,245,255,0.08); border-left: 2px solid rgba(0,245,255,0.2); border-radius: 0 4px 4px 0; padding: 16px; margin-bottom: 12px; display: flex; gap: 16px; align-items: flex-start; transition: border-color 0.25s; }
+        .mentor-card:hover { border-left-color: var(--cyan); }
+        .mentor-avatar { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--magenta)); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; font-weight: bold; flex-shrink: 0; }
+        .mentor-info h4 { color: var(--text); margin-bottom: 4px; font-size: 0.92rem; }
+        .mentor-role { color: var(--cyan); font-size: 0.78rem; margin-bottom: 4px; letter-spacing: 1px; }
+        .mentor-focus { color: var(--muted); font-size: 0.78rem; }
+
+        /* ── AI case number ── */
+        .case-number { font-size: 0.65rem; color: var(--magenta); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px; font-family: 'Orbitron', monospace; opacity: 0.7; }
+
+
+        /* ── Feedback log ── */
+        .log-entry { border: 1px solid rgba(0,245,255,0.08); border-left: 2px solid rgba(0,245,255,0.3); border-radius: 0 4px 4px 0; padding: 12px 14px; margin-bottom: 9px; background: rgba(4,6,18,0.6); }
+        .log-date { font-size:0.72rem; color: var(--cyan); font-family: 'Orbitron', monospace; letter-spacing: 2px; }
+        .log-type { display: inline-block; padding: 2px 7px; border-radius: 2px; font-size: 0.68rem; margin-left: 8px; }
+        .type-feedback    { background: rgba(0,245,255,0.1);  color: #00f5ff; border: 1px solid rgba(0,245,255,0.35); }
+        .type-achievement { background: rgba(255,0,255,0.1); color: #ff00ff; border: 1px solid rgba(255,0,255,0.35); }
+        .type-goal        { background: rgba(123,47,255,0.1); color: #a06aff; border: 1px solid rgba(123,47,255,0.35); }
+
+        /* ── End page ── */
+        .end-page-content { text-align: center; padding: 50px 20px; }
+        .completion-badge {
+            width: 110px; height: 110px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(123,47,255,0.3), rgba(0,245,255,0.15));
+            border: 2px solid var(--cyan);
+            margin: 24px auto; display: flex; align-items: center; justify-content: center;
+            font-size: 2.8rem;
+            box-shadow: 0 0 0 1px rgba(0,245,255,0.1), 0 0 40px rgba(0,245,255,0.15);
+            animation: pulse 3s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100% { box-shadow: 0 0 0 1px rgba(0,245,255,0.15), 0 0 30px rgba(0,245,255,0.2); }
+            50%      { box-shadow: 0 0 0 1px rgba(255,0,255,0.2), 0 0 40px rgba(255,0,255,0.2); }
+        }
+
+        /* ── Values pills ── */
+        .value-pill { background: rgba(0,245,255,0.07); border: 1px solid rgba(0,245,255,0.25); color: var(--cyan); padding: 5px 12px; border-radius: 2px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 7px; }
+        .value-pill span { cursor: pointer; opacity: 0.5; }
+        .value-pill span:hover { opacity: 1; color: var(--magenta); }
+
+        /* ── Add-row form helper ── */
+        .add-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-top: 12px; }
+        .add-row > div { flex: 1; min-width: 100px; }
+        .add-row input, .add-row select { margin: 0; }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--dark1); }
+        ::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.2); border-radius: 0; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,245,255,0.4); }
+
+        /* ── Metro utility — Line indicator tags ── */
+        .metro-line-label {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-family: 'Orbitron', monospace; font-size: 0.6rem; letter-spacing: 2px;
+            text-transform: uppercase; padding: 2px 8px;
+            border: 1px solid; border-radius: 2px;
+        }
+        .metro-line-label::before {
+            content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+        }
+        .line-c { color: var(--cyan);    border-color: rgba(0,245,255,0.3); }
+        .line-m { color: var(--magenta); border-color: rgba(255,0,255,0.3); }
+        .line-p { color: var(--purple);  border-color: rgba(123,47,255,0.3); }
+
+        /* ── Section divider — Metro interchange ── */
+        .metro-divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 20px 0; font-family: 'Orbitron', monospace;
+            font-size: 0.62rem; letter-spacing: 3px; color: var(--muted);
+        }
+        .metro-divider::before, .metro-divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,245,255,0.2), transparent);
+        }
+
+        /* ── Skill Categories ── */
+        .skills-cat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px; align-items:start; }
+        @media(max-width:900px){ .skills-cat-grid{ grid-template-columns:1fr; } }
+        .skill-cat-header { padding:12px 16px; border-radius:0; font-family:'Orbitron',monospace; font-size:0.72rem; letter-spacing:2px; font-weight:700; display:flex; align-items:center; gap:10px; }
+        .skill-cat-table { width:100%; border-collapse:collapse; background:rgba(6,6,22,0.8); border:1px solid rgba(0,245,255,0.08); border-top:none; border-radius:0 0 4px 4px; overflow:hidden; }
+        .skill-cat-table th { background:rgba(4,6,18,0.9); color:var(--muted); padding:6px 8px; font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; font-family:'Orbitron',monospace; font-weight:600; }
+        .skill-cat-table td { padding:6px 8px; border-bottom:1px solid rgba(0,245,255,0.05); font-size:0.8rem; vertical-align:middle; }
+        .skill-cat-table tr:last-child td { border-bottom:none; }
+        .skill-cat-table tr:hover td { background:rgba(0,245,255,0.02); }
+        .rc-wrap { display:flex; gap:2px; align-items:center; }
+        .rc { width:11px; height:11px; border-radius:50%; border:1.5px solid rgba(0,245,255,0.25); cursor:pointer; transition:all 0.15s; flex-shrink:0; }
+        .rc:hover { border-color:var(--cyan); background:rgba(0,245,255,0.2); }
+        .rc.filled-today  { background:var(--cyan); border-color:var(--cyan); }
+        .rc.filled-target { background:var(--magenta); border-color:var(--magenta); }
+        .rc.filled-actual { background:#39ff14; border-color:#39ff14; }
+        .rc.is-actual:not(.filled-actual) { border-color:rgba(57,255,20,0.25); }
+        .rc.is-actual:hover { border-color:#39ff14; background:rgba(57,255,20,0.2); }
+
+        /* ── Table of 5 ── */
+        .t5-intro { background:rgba(6,6,22,0.8); border:1px solid rgba(0,245,255,0.1); border-left:2px solid var(--cyan); border-radius:0 6px 6px 0; padding:20px 24px; margin-bottom:22px; line-height:1.75; font-size:0.9rem; }
+        .t5-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:22px; }
+        @media(max-width:860px){ .t5-grid{ grid-template-columns:1fr; } }
+        .t5-card { background:rgba(6,6,22,0.85); border:1px solid rgba(0,245,255,0.1); border-top:2px solid rgba(0,245,255,0.3); border-radius:0 0 6px 6px; padding:16px; display:flex; gap:14px; align-items:flex-start; transition:all 0.25s; position:relative; }
+        .t5-card:hover { border-color:rgba(0,245,255,0.22); box-shadow:0 4px 20px rgba(0,0,0,0.5); }
+        .t5-avatar { width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid var(--cyan); flex-shrink:0; cursor:pointer; background:linear-gradient(135deg,var(--cyan),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:700; color:#fff; overflow:hidden; }
+        .t5-avatar img { width:100%; height:100%; object-fit:cover; }
+        .t5-body { flex:1; min-width:0; }
+        .t5-role-tag { display:inline-block; font-size:0.65rem; padding:2px 8px; border-radius:2px; margin-bottom:6px; font-family:'Orbitron',monospace; letter-spacing:1px; }
+        .t5-name-input { background:transparent; border:none; border-bottom:1px solid rgba(0,245,255,0.18); color:var(--text); font-size:0.98rem; font-weight:700; width:100%; padding:2px 0; margin-bottom:6px; font-family:'Exo 2',sans-serif; transition:border-color 0.2s; }
+        .t5-name-input:focus { outline:none; border-bottom-color:var(--cyan); }
+        .t5-name-input::placeholder { color:var(--muted); font-weight:400; }
+        .t5-meta-row { display:flex; gap:14px; flex-wrap:wrap; margin-top:6px; }
+        .t5-meta-input { background:rgba(4,6,18,0.7); border:1px solid rgba(0,245,255,0.12); border-radius:3px; color:var(--text); font-size:0.76rem; padding:4px 8px; width:100%; font-family:'Exo 2',sans-serif; transition:border-color 0.2s; margin-top:4px; }
+        .t5-meta-input:focus { outline:none; border-color:var(--cyan); }
+        .t5-meta-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:8px; display:block; }
+        .t5-upload-hint { font-size:0.68rem; color:var(--muted); text-align:center; margin-top:4px; }
+
+        /* ── Calendar ── */
+        .cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+        .cal-month-label { font-family:'Orbitron',monospace; color:var(--cyan); font-size:1rem; letter-spacing:3px; }
+        .cal-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:3px; }
+        .cal-dow { text-align:center; font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; padding:5px 0; font-family:'Orbitron',monospace; }
+        .cal-day { min-height:78px; height:auto; background:rgba(4,6,18,0.6); border:1px solid rgba(0,245,255,0.07); border-radius:3px; padding:5px; cursor:pointer; transition:all 0.2s; }
+        .cal-day:hover { border-color:rgba(0,245,255,0.25); background:rgba(6,8,24,0.9); }
+        .cal-day.today { border-color:var(--cyan); border-top:2px solid var(--cyan); }
+        .cal-day.other-month { opacity:0.25; pointer-events:none; }
+        .cal-day-num { font-size:0.72rem; font-weight:700; color:var(--text); margin-bottom:3px; font-family:'Orbitron',monospace; }
+        .cal-day.today .cal-day-num { color:var(--cyan); }
+        .cal-activity { font-size:0.62rem; padding:2px 4px; border-radius:2px; margin-bottom:2px; white-space:normal; overflow:visible; word-break:break-word; }
+        .cal-activity.planned { background:rgba(0,245,255,0.12); border:1px solid rgba(0,245,255,0.35); color:var(--cyan); }
+        .cal-activity.actual  { background:rgba(255,0,255,0.12); border:1px solid rgba(255,0,255,0.35); color:var(--magenta); }
+        .cal-legend { display:flex; gap:16px; margin-bottom:12px; }
+        .cal-legend-item { display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--text); }
+        .cal-legend-dot { width:10px; height:10px; border-radius:2px; }
+        .cal-legend-dot.planned { background:rgba(0,245,255,0.35); border:1px solid var(--cyan); }
+        .cal-legend-dot.actual  { background:rgba(255,0,255,0.35); border:1px solid var(--magenta); }
+        /* Calendar modal */
+        .cal-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:2000; backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+        .cal-modal.open { display:flex; }
+        .cal-modal-box { background:#06060f; border:1px solid rgba(0,245,255,0.25); border-top:2px solid var(--cyan); border-radius:0 0 8px 8px; padding:24px; width:370px; max-width:95vw; box-shadow:0 0 40px rgba(0,0,0,0.8); }
+        .cal-modal-date { font-family:'Orbitron',monospace; color:var(--cyan); font-size:0.8rem; letter-spacing:3px; margin-bottom:14px; }
+        .cal-modal-entries { max-height:180px; overflow-y:auto; margin-bottom:12px; }
+        .cal-entry { display:flex; align-items:center; gap:8px; padding:6px 8px; background:rgba(4,6,18,0.7); border-radius:3px; margin-bottom:4px; border:1px solid rgba(0,245,255,0.05); }
+        .cal-entry-tag { font-size:0.65rem; padding:2px 7px; border-radius:2px; flex-shrink:0; }
+        .cal-entry-tag.planned { background:rgba(0,245,255,0.12); color:var(--cyan); border:1px solid rgba(0,245,255,0.35); }
+        .cal-entry-tag.actual  { background:rgba(255,0,255,0.12); color:var(--magenta); border:1px solid rgba(255,0,255,0.35); }
+        .cal-entry-title { flex:1; font-size:0.82rem; }
+        .cal-entry-remove { background:none; border:none; color:rgba(255,60,100,0.45); cursor:pointer; font-size:0.85rem; padding:0 2px; transition:color 0.2s; }
+        .cal-entry-remove:hover { color:#ff3c64; }
+
+        /* ── Responsive ── */
+        @media (max-width: 860px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main { margin-left: 0; padding: 16px; }
+            .two-col, .swot-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <div style="font-size:0.58rem; letter-spacing:4px; color:var(--muted); text-transform:uppercase; margin-bottom:8px; font-family:'Orbitron',monospace;">SAP · PHL · FE1 SYSTEM</div>
+        <div class="passport-icon">🚇</div>
+        <h2>Self-Development<br>Passport</h2>
+        <div class="metro-lines-bar">
+            <div class="metro-line-chip c"></div>
+            <div class="metro-line-chip m"></div>
+            <div class="metro-line-chip p"></div>
+        </div>
+        <div style="margin-top:6px; font-size:0.78rem; color:var(--text); font-family:'Exo 2',sans-serif; letter-spacing:0;">Phoebe Ngitngit</div>
+        <div style="font-size:0.68rem; color:var(--muted);">Solution Advisor - SCM · SAP Philippines</div>
+    </div>
+    <div class="nav-item active"    onclick="showPage('dashboard')">  <div class="nav-number">D</div>  <span>Dashboard</span></div>
+    <div class="nav-item"           onclick="showPage('skills')">      <div class="nav-number">S</div>  <span>Skills &amp; Learning</span> <span class="nav-check" id="check-skills"></span></div>
+    <div class="nav-item"           onclick="showPage('about')">       <div class="nav-number">1</div>  <span>About Me</span>              <span class="nav-check" id="check-about"></span></div>
+    <div class="nav-item"           onclick="showPage('stakeholder')"> <div class="nav-number">2</div>  <span>Engagement &amp; Dev Plan</span>       <span class="nav-check" id="check-stakeholder"></span></div>
+    <div class="nav-item"           onclick="showPage('mentor')">      <div class="nav-number">3</div>  <span>Mentor &amp; Coach</span>    <span class="nav-check" id="check-mentor"></span></div>
+    <div class="nav-item"           onclick="showPage('ai')">          <div class="nav-number">4</div>  <span>Top 3 AI Use Cases</span>   <span class="nav-check" id="check-ai"></span></div>
+    <div class="nav-item"           onclick="showPage('performance')"> <div class="nav-number">5</div>  <span>Performance &amp; Feedback</span> <span class="nav-check" id="check-performance"></span></div>
+    <div class="nav-item"           onclick="showPage('calendar')">    <div class="nav-number">6</div>  <span>Activity Calendar</span>     <span class="nav-check" id="check-calendar"></span></div>
+    <div class="nav-item"           onclick="showPage('end')">         <div class="nav-number">✦</div>  <span>End Page</span></div>
+</div>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<div class="main">
+
+    <!-- ─── DASHBOARD ─── -->
+    <div class="page active" id="page-dashboard">
+        <div class="page-header" data-code="D — DASHBOARD">
+            <h1>Dashboard</h1>
+            <p>Your self-development journey at a glance</p>
+        </div>
+        <div class="progress-grid" id="progress-grid"></div>
+        <div id="dashboard-stats" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-top:20px;"></div>
+    </div>
+
+    <!-- ─── SKILLS & LEARNING ─── -->
+    <div class="page" id="page-skills">
+        <div class="page-header" data-code="S — SKILLS & LEARNING">
+            <h1>Skills &amp; Learning</h1>
+            <p>Rate your current and target skill levels, track learnings and your network</p>
+        </div>
+
+        <div class="card">
+            <h3>🎯 Skills Self-Assessment</h3>
+            <div style="display:flex; gap:18px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+                <div style="display:flex; align-items:center; gap:7px; font-size:0.82rem;"><span style="width:14px;height:14px;border-radius:50%;background:var(--cyan);display:inline-block;box-shadow:0 0 5px rgba(0,245,255,0.5);"></span> Starting</div>
+                <div style="display:flex; align-items:center; gap:7px; font-size:0.82rem;"><span style="width:14px;height:14px;border-radius:50%;background:#39ff14;display:inline-block;box-shadow:0 0 5px rgba(57,255,20,0.5);"></span> Actual</div>
+                <div style="display:flex; align-items:center; gap:7px; font-size:0.82rem;"><span style="width:14px;height:14px;border-radius:50%;background:var(--magenta);display:inline-block;box-shadow:0 0 5px rgba(255,0,255,0.5);"></span> Target</div>
+            </div>
+            <div class="skills-cat-grid" id="skills-cat-grid"></div>
+            <div class="section-save-bar">
+                <button class="btn btn-primary" onclick="saveSection('skills')">💾 Save Skills</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📚 Learnings Tracker</h3>
+            <div id="learnings-list" style="margin-bottom:14px;"></div>
+            <div style="display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center;">
+                <input type="text" id="new-learning-title" placeholder="Course, book, certification…" style="margin:0;">
+                <select id="new-learning-type" style="margin:0; width:130px;">
+                    <option value="Course">📖 Course</option>
+                    <option value="Book">📗 Book</option>
+                    <option value="Certification">🏅 Cert</option>
+                    <option value="Workshop">🛠️ Workshop</option>
+                    <option value="Other">💡 Other</option>
+                </select>
+                <button class="btn btn-primary" style="white-space:nowrap;" onclick="addLearning()">Add</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🎓 Academy Associates and Graduates Network</h3>
+            <p style="color:var(--muted); font-size:0.88rem; margin-bottom:14px;">Track your professional connections from the academy</p>
+            <div id="network-list"></div>
+            <div class="add-row" style="margin-top:14px;">
+                <div><label>Name</label><input type="text" id="network-name" placeholder="Full name" style="margin:0;"></div>
+                <div><label>Role / Title</label><input type="text" id="network-role" placeholder="Role" style="margin:0;"></div>
+                <div><label>Organisation</label><input type="text" id="network-org" placeholder="Org" style="margin:0;"></div>
+                <button class="btn btn-primary" style="height:40px; align-self:flex-end;" onclick="addNetworkMember()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── ABOUT ME ─── -->
+    <div class="page" id="page-about">
+        <div class="page-header" data-code="01 — ABOUT ME">
+            <h1>About Me</h1>
+            <p>Your personal brand and self-assessment</p>
+        </div>
+
+        <div class="card">
+            <h3>Personal Identity</h3>
+            <div style="display:flex; gap:24px; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap;">
+                <!-- Photo upload -->
+                <div style="flex-shrink:0; text-align:center;">
+                    <div id="photo-preview" onclick="document.getElementById('photo-input').click()" style="width:120px; height:120px; border-radius:50%; border:2px solid var(--cyan); box-shadow:0 0 20px rgba(0,245,255,0.3); background:rgba(4,4,15,0.8); display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; transition:all 0.3s; position:relative;">
+                        <span id="photo-placeholder" style="font-size:2.5rem; filter:drop-shadow(0 0 8px var(--cyan));">👤</span>
+                        <img id="photo-img" src="" alt="Profile" style="display:none; width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="uploadPhoto(event)">
+                    <button class="btn btn-secondary" onclick="document.getElementById('photo-input').click()" style="margin-top:10px; padding:6px 14px; font-size:0.72rem;">📷 Upload Photo</button>
+                </div>
+                <!-- Identity fields -->
+                <div style="flex:1; min-width:200px;">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="about-name" value="Phoebe Ngitngit" readonly
+                            style="color:var(--cyan); font-weight:600; cursor:default; border-color:rgba(0,245,255,0.1);">
+                    </div>
+                    <div class="two-col">
+                        <div class="form-group">
+                            <label>Role / Title</label>
+                            <input type="text" id="about-role" value="Solution Advisor - SCM" readonly
+                                style="color:var(--cyan); font-weight:600; cursor:default; border-color:rgba(0,245,255,0.1);">
+                        </div>
+                        <div class="form-group">
+                            <label>Organisation</label>
+                            <input type="text" id="about-org" value="SAP Philippines" readonly
+                                style="color:var(--cyan); font-weight:600; cursor:default; border-color:rgba(0,245,255,0.1);">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Personal Brand Statement</label>
+                <textarea id="about-brand" placeholder="Describe who you are, what you stand for, and the value you bring…" style="min-height:100px;"></textarea>
+            </div>
+            <div class="two-col">
+                <div class="form-group">
+                    <label>SDI Personality Type</label>
+                    <select id="about-sdi">
+                        <option value="">Select your SDI type…</option>
+                        <option>Blue – Altruistic-Nurturing</option>
+                        <option>Red – Assertive-Directing</option>
+                        <option>Green – Analytic-Autonomizing</option>
+                        <option>Hub – Flexible-Cohering</option>
+                        <option>Red-Blue</option>
+                        <option>Red-Green</option>
+                        <option>Blue-Green</option>
+                        <option>Other / Not yet assessed</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Conflict Style (SDI)</label><input type="text" id="about-conflict" placeholder="e.g. Accommodating, Competing…"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Core Values</h3>
+            <div id="values-list" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; min-height:32px;"></div>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="new-value" placeholder="Type a value and press Add…" style="flex:1; margin:0;">
+                <button class="btn btn-primary" onclick="addValue()">Add</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>SWOT Analysis</h3>
+            <div class="swot-grid">
+                <div class="swot-quadrant swot-s">
+                    <h4>💪 Strengths</h4>
+                    <div id="swot-list-s" class="swot-items"></div>
+                    <div style="display:flex; gap:6px; margin-top:8px;">
+                        <input type="text" id="swot-input-s" placeholder="Add a strength…" style="flex:1; margin:0; font-size:0.82rem; padding:7px 10px;">
+                        <button class="btn btn-primary" style="padding:7px 12px; font-size:0.78rem;" onclick="addSwotItem('s')">Add</button>
+                    </div>
+                </div>
+                <div class="swot-quadrant swot-w">
+                    <h4>⚠️ Weaknesses</h4>
+                    <div id="swot-list-w" class="swot-items"></div>
+                    <div style="display:flex; gap:6px; margin-top:8px;">
+                        <input type="text" id="swot-input-w" placeholder="Add a weakness…" style="flex:1; margin:0; font-size:0.82rem; padding:7px 10px;">
+                        <button class="btn btn-primary" style="padding:7px 12px; font-size:0.78rem;" onclick="addSwotItem('w')">Add</button>
+                    </div>
+                </div>
+                <div class="swot-quadrant swot-o">
+                    <h4>🌟 Opportunities</h4>
+                    <div id="swot-list-o" class="swot-items"></div>
+                    <div style="display:flex; gap:6px; margin-top:8px;">
+                        <input type="text" id="swot-input-o" placeholder="Add an opportunity…" style="flex:1; margin:0; font-size:0.82rem; padding:7px 10px;">
+                        <button class="btn btn-primary" style="padding:7px 12px; font-size:0.78rem;" onclick="addSwotItem('o')">Add</button>
+                    </div>
+                </div>
+                <div class="swot-quadrant swot-t">
+                    <h4>🚧 Threats</h4>
+                    <div id="swot-list-t" class="swot-items"></div>
+                    <div style="display:flex; gap:6px; margin-top:8px;">
+                        <input type="text" id="swot-input-t" placeholder="Add a threat…" style="flex:1; margin:0; font-size:0.82rem; padding:7px 10px;">
+                        <button class="btn btn-primary" style="padding:7px 12px; font-size:0.78rem;" onclick="addSwotItem('t')">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-save-bar">
+            <button class="btn btn-primary" onclick="saveSection('about')">💾 Save About Me</button>
+        </div>
+    </div>
+
+    <!-- ─── STAKEHOLDER MAP ─── -->
+    <div class="page" id="page-stakeholder">
+        <div class="page-header" data-code="02 — ENGAGEMENT & DEV PLAN">
+            <h1>Engagement &amp; Development Plan</h1>
+            <p>Detailed engagement plan, 90-day development plan, and key activities</p>
+        </div>
+
+        <div class="card">
+            <h3>Detailed Engagement Plan</h3>
+            <table><thead><tr><th>Stakeholder</th><th>Engagement Strategy</th><th>Frequency</th><th>Goal</th><th></th></tr></thead>
+                <tbody id="engagement-table"></tbody></table>
+            <div class="add-row">
+                <div><input type="text" id="eng-stakeholder" placeholder="Stakeholder" style="margin:0;"></div>
+                <div><input type="text" id="eng-strategy" placeholder="Strategy" style="margin:0;"></div>
+                <div style="max-width:130px;"><input type="text" id="eng-frequency" placeholder="e.g. Monthly" style="margin:0;"></div>
+                <div><input type="text" id="eng-goal" placeholder="Goal" style="margin:0;"></div>
+                <button class="btn btn-primary" style="height:40px; align-self:flex-end;" onclick="addEngagement()">Add</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>90-Day Personal Development Plan</h3>
+            <div id="pdp-timeline" class="timeline"></div>
+            <div class="add-row" style="margin-top:14px;">
+                <div style="max-width:140px;">
+                    <label>Phase</label>
+                    <select id="pdp-phase" style="margin:0;"><option>Day 1–30</option><option>Day 31–60</option><option>Day 61–90</option></select>
+                </div>
+                <div><label>Objective</label><input type="text" id="pdp-objective" placeholder="Objective" style="margin:0;"></div>
+                <div><label>Success Measure</label><input type="text" id="pdp-measure" placeholder="How will you measure it?" style="margin:0;"></div>
+                <button class="btn btn-primary" style="height:40px; align-self:flex-end;" onclick="addPDP()">Add</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Key Activities</h3>
+            <div id="activities-list"></div>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+                <input type="text" id="new-activity" placeholder="Add a key activity…" style="flex:1; margin:0;">
+                <button class="btn btn-primary" onclick="addActivity()">Add</button>
+            </div>
+        </div>
+
+        <div class="section-save-bar">
+            <button class="btn btn-primary" onclick="saveSection('stakeholder')">💾 Save Plan</button>
+        </div>
+    </div>
+
+    <!-- ─── MENTOR & COACH ─── -->
+    <div class="page" id="page-mentor">
+        <div class="page-header" data-code="03 — MENTOR & COACH">
+            <h1>Mentor &amp; Coach Structure</h1>
+            <p>Your Table of 5 — five perspectives guiding your growth</p>
+        </div>
+
+        <div class="t5-intro">
+            <strong style="color:var(--cyan);">What is your Table of 5?</strong> The concept is simple: <strong>you intentionally "seat" five mentors &amp; coaches at your imaginary table</strong> to guide your thinking, decisions, and growth. Instead of relying on one mentor, you draw insight from <strong>five different perspectives</strong>, each bringing a unique strength or worldview.
+        </div>
+
+        <div class="t5-grid" id="t5-grid"></div>
+
+        <div class="section-save-bar">
+            <button class="btn btn-primary" onclick="saveSection('mentor')">💾 Save Table of 5</button>
+        </div>
+    </div>
+
+    <!-- ─── AI USE CASES ─── -->
+    <div class="page" id="page-ai">
+        <div class="page-header" data-code="04 — AI USE CASES">
+            <h1>Top 3 AI Use Cases</h1>
+            <p>How you plan to leverage AI in your personal development</p>
+        </div>
+        <div id="ai-cases"></div>
+        <div class="section-save-bar">
+            <button class="btn btn-primary" onclick="saveSection('ai')">💾 Save AI Use Cases</button>
+        </div>
+    </div>
+
+    <!-- ─── PERFORMANCE & FEEDBACK ─── -->
+    <div class="page" id="page-performance">
+        <div class="page-header" data-code="05 — PERFORMANCE & FEEDBACK">
+            <h1>Performance Tracking &amp; Feedback Log</h1>
+            <p>Track your progress, feedback received, and achievements</p>
+        </div>
+
+        <div class="card">
+            <h3>Overall Performance Rating</h3>
+            <div class="two-col">
+                <div class="form-group">
+                    <label>Current Score</label>
+                    <div style="display:flex; align-items:center; gap:14px; margin-top:8px;">
+                        <input type="range" id="perf-score" min="1" max="10" value="5"
+                               oninput="document.getElementById('perf-score-val').textContent=this.value"
+                               style="flex:1; background:transparent; margin:0; cursor:pointer;">
+                        <span id="perf-score-val" style="color:#c9a84c; font-size:1.5rem; font-weight:bold; min-width:28px;">5</span>
+                        <span style="color:#8899aa;">/10</span>
+                    </div>
+                </div>
+                <div class="form-group"><label>Assessment Date</label><input type="date" id="perf-date"></div>
+            </div>
+            <div class="form-group"><label>Notes</label><textarea id="perf-notes" placeholder="Overall performance notes…"></textarea></div>
+        </div>
+
+        <div class="card">
+            <h3>Feedback &amp; Achievement Log</h3>
+            <div id="feedback-log"></div>
+
+            <div style="background:rgba(4,6,18,0.8); border:1px solid rgba(0,245,255,0.1); border-top:2px solid rgba(0,245,255,0.3); border-radius:0 0 6px 6px; padding:18px 20px; margin-top:16px;">
+                <p style="font-family:'Orbitron',monospace; color:var(--muted); font-size:0.65rem; text-transform:uppercase; letter-spacing:3px; margin-bottom:14px;">ADD LOG ENTRY</p>
+                <div class="two-col">
+                    <div class="form-group"><label>Date</label><input type="date" id="log-date"></div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="log-type">
+                            <option value="feedback">Feedback Received</option>
+                            <option value="achievement">Achievement</option>
+                            <option value="goal">Goal Update</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><label>Source / Context</label><input type="text" id="log-source" placeholder="Who gave feedback / what was the context?"></div>
+                <div class="form-group"><label>Details</label><textarea id="log-details" placeholder="Describe the feedback, achievement, or goal update…"></textarea></div>
+                <div class="form-group"><label>Action / Follow-up</label><input type="text" id="log-action" placeholder="What will you do with this?"></div>
+                <button class="btn btn-primary" onclick="addLogEntry()">Add Entry</button>
+            </div>
+        </div>
+
+        <div class="section-save-bar">
+            <button class="btn btn-primary" onclick="saveSection('performance')">💾 Save Performance Log</button>
+        </div>
+    </div>
+
+    <!-- ─── ACTIVITY CALENDAR ─── -->
+    <div class="page" id="page-calendar">
+        <div class="page-header" data-code="06 — ACTIVITY CALENDAR">
+            <h1>Activity Calendar</h1>
+            <p>Plan and track your development activities — click any day to tag planned or actual activities</p>
+        </div>
+        <div class="card">
+            <div class="cal-legend">
+                <div class="cal-legend-item"><div class="cal-legend-dot planned"></div>Planned</div>
+                <div class="cal-legend-item"><div class="cal-legend-dot actual"></div>Actual</div>
+            </div>
+            <div class="cal-nav">
+                <button class="btn btn-secondary" style="padding:8px 18px;" onclick="calNav(-1)">← Prev</button>
+                <div class="cal-month-label" id="cal-month-label"></div>
+                <button class="btn btn-secondary" style="padding:8px 18px;" onclick="calNav(1)">Next →</button>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+        </div>
+    </div>
+
+    <!-- ─── END PAGE ─── -->
+    <div class="page" id="page-end">
+        <div class="end-page-content">
+            <div style="font-family:'Orbitron',monospace; font-size:0.58rem; letter-spacing:4px; color:var(--muted); text-transform:uppercase; margin-bottom:16px;">✦ — FINAL STATION · FE1 LINE</div>
+            <div class="completion-badge">🏆</div>
+            <h1 style="color:var(--text); font-family:'Orbitron',monospace; font-size:1.6rem; margin-bottom:12px; letter-spacing:2px;">Your Journey Continues</h1>
+            <p style="color:var(--muted); max-width:480px; margin:0 auto 28px; line-height:1.7; font-size:0.9rem;">
+                This passport is a living document of your growth. Return to it regularly,
+                update your progress, and celebrate how far you've come.
+            </p>
+
+            <div id="end-stats" style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin:24px 0;"></div>
+
+            <div class="card" style="max-width:580px; margin:20px auto; text-align:left;">
+                <h3>Reflection Note</h3>
+                <textarea id="reflection" placeholder="Write a reflection on your journey so far…" style="min-height:120px;"></textarea>
+                <button class="btn btn-primary" style="margin-top:10px;" onclick="saveReflection()">Save Reflection</button>
+            </div>
+
+            <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveAsPDF()">📄 Save as PDF</button>
+                <button class="btn btn-secondary" onclick="exportJSON()">📥 Export as JSON</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('import-input').click()">📤 Import JSON</button>
+            </div>
+            <input type="file" id="import-input" accept=".json" style="display:none;" onchange="importJSON(event)">
+            <p style="color:#8899aa; font-size:0.8rem; margin-top:12px;">Share your exported JSON file with others — they click Import to load your progress instantly.</p>
+        </div>
+    </div>
+
+</div><!-- /.main -->
+
+<div class="save-notification" id="save-notification">✅ Saved!</div>
+
+<!-- ── Calendar Activity Modal ── -->
+<div class="cal-modal" id="cal-modal">
+    <div class="cal-modal-box">
+        <div class="cal-modal-date" id="cal-modal-date"></div>
+        <div class="cal-modal-entries" id="cal-modal-entries"></div>
+        <div class="form-group" style="margin-bottom:10px;">
+            <label>Activity</label>
+            <input type="text" id="cal-new-title" placeholder="e.g. Leadership workshop, Coaching session…" style="margin:0;">
+        </div>
+        <div class="form-group" style="margin-bottom:14px;">
+            <label>Tag as</label>
+            <select id="cal-new-type" style="margin:0;">
+                <option value="planned">📋 Planned</option>
+                <option value="actual">✅ Actual</option>
+            </select>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="addCalActivity()">Add Activity</button>
+            <button class="btn btn-secondary" onclick="closeCalModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Confirm Modal ── -->
+<div id="confirm-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:2000; backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+    <div style="background:rgba(6,6,22,0.98); border:1px solid rgba(255,60,100,0.3); border-top:2px solid #ff3c64; border-radius:0 0 6px 6px; padding:28px 26px; max-width:380px; width:90%; text-align:center; box-shadow:0 8px 40px rgba(0,0,0,0.8);">
+        <div style="font-family:'Orbitron',monospace; color:#ff3c64; font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; margin-bottom:14px; opacity:0.7;">⚠ CONFIRM ACTION</div>
+        <p id="confirm-message" style="color:var(--text); font-size:0.9rem; line-height:1.7; margin-bottom:24px;"></p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button class="btn btn-secondary" onclick="closeConfirm()" style="min-width:100px;">Cancel</button>
+            <button class="btn" id="confirm-ok-btn" onclick="confirmOK()"
+                style="min-width:100px; background:linear-gradient(135deg,#ff3c64,#c2185b); color:#fff; border-radius:4px;">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── PDF Section Picker Modal ── -->
+<div id="pdf-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:2000; backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+  <div style="background:rgba(6,6,22,0.98); border:1px solid rgba(0,245,255,0.2); border-top:2px solid var(--cyan); border-radius:0 0 6px 6px; padding:28px 26px; max-width:460px; width:92%; box-shadow:0 8px 40px rgba(0,0,0,0.8);">
+    <div style="font-family:'Orbitron',monospace; color:var(--cyan); font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; margin-bottom:4px; opacity:0.7;">EXPORT — PDF</div>
+    <div style="font-family:'Orbitron',monospace; color:var(--text); font-size:1rem; letter-spacing:1px; margin-bottom:6px;">Generate Document</div>
+    <p style="color:var(--muted); font-size:0.8rem; margin-bottom:18px; line-height:1.5;">Select the sections to include in your export.</p>
+
+    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+      <button onclick="pdfToggleAll()" id="pdf-toggle-all-btn" style="background:none; border:1px solid rgba(0,245,255,0.2); color:var(--muted); font-size:0.68rem; padding:4px 12px; border-radius:3px; cursor:pointer; letter-spacing:2px; font-family:'Orbitron',monospace; text-transform:uppercase;">Deselect All</button>
+    </div>
+
+    <div id="pdf-section-list" style="display:flex; flex-direction:column; gap:6px; max-height:300px; overflow-y:auto; padding-right:4px; margin-bottom:22px;">
+      <!-- filled by openPDFModal() -->
+    </div>
+
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn btn-secondary" onclick="closePDFModal()" style="min-width:110px;">Cancel</button>
+      <button class="btn btn-primary" onclick="generateSelectedPDF()" style="min-width:130px;">
+        Generate PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ JAVASCRIPT ══════════════ -->
+<script>
+// ── Data model ──────────────────────────────────────────────────────────────
+let data = {
+    network: [],
+    skills: ['Leadership', 'Communication', 'Strategic Thinking', 'Problem Solving', 'Collaboration'],
+    skillRatings: {},
+    skillRatings2: {},
+    learnings: [],
+    about: { name:'', role:'', brand:'', sdi:'', conflict:'' },
+    values: [],
+    swot: { s:[], w:[], o:[], t:[] },
+    stakeholders: [],
+    engagements: [],
+    pdp: [],
+    activities: [],
+    mentors: [],
+    table5: [
+        { role:'The Role Model',   roleColor:'#3b82f6', name:'', org:'', lastSession:'', nextSession:'', photo:'' },
+        { role:'The Expert',       roleColor:'#8b5cf6', name:'', org:'', lastSession:'', nextSession:'', photo:'' },
+        { role:'The Challenger',   roleColor:'#ef4444', name:'', org:'', lastSession:'', nextSession:'', photo:'' },
+        { role:'The Strategist',   roleColor:'#f59e0b', name:'', org:'', lastSession:'', nextSession:'', photo:'' },
+        { role:'The Supporter',    roleColor:'#10b981', name:'', org:'', lastSession:'', nextSession:'', photo:'' }
+    ],
+    ai: [
+        { title:'', problem:'', approach:'', outcome:'' },
+        { title:'', problem:'', approach:'', outcome:'' },
+        { title:'', problem:'', approach:'', outcome:'' }
+    ],
+    performance: { score:5, date:'', notes:'' },
+    feedbackLog: [],
+    reflection: '',
+    completedSections: {},
+    calendar: {}
+};
+
+// ── Persistence ──────────────────────────────────────────────────────────────
+function loadData() {
+    const saved = localStorage.getItem('selfDevPassport_v2');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            data = { ...data, ...parsed };
+            // ensure 3 ai slots
+            while (data.ai.length < 3) data.ai.push({ title:'', problem:'', approach:'', outcome:'' });
+            // migrate swot from old string format to arrays
+            ['s','w','o','t'].forEach(q => {
+                if (typeof data.swot[q] === 'string') {
+                    const str = data.swot[q].trim();
+                    data.swot[q] = str ? str.split('\n').map(s => s.trim()).filter(Boolean) : [];
+                } else if (!Array.isArray(data.swot[q])) {
+                    data.swot[q] = [];
+                }
+            });
+            // migrate old skillRatings (number) to skillRatings2 ({today, target})
+            if (!data.skillRatings2) data.skillRatings2 = {};
+            if (data.skillRatings) {
+                Object.entries(data.skillRatings).forEach(([k,v]) => {
+                    if (typeof v === 'number' && !data.skillRatings2[k]) {
+                        data.skillRatings2[k] = { today: v, target: 0 };
+                    }
+                });
+            }
+        } catch(e) { console.error('Load error', e); }
+    }
+    // migrate skillRatings (number) → skillRatings2 ({today, target})
+    if (!data.skillRatings2) data.skillRatings2 = {};
+    if (data.skillRatings) {
+        Object.entries(data.skillRatings).forEach(([k,v]) => {
+            if (typeof v === 'number' && !data.skillRatings2[k])
+                data.skillRatings2[k] = { today: v, target: 0 };
+        });
+    }
+    // ensure table5 exists
+    if (!data.table5 || data.table5.length < 5) {
+        data.table5 = [
+            { role:'The Role Model',   roleColor:'#3b82f6', name:'', org:'', lastSession:'', nextSession:'', photo:'' },
+            { role:'The Expert',       roleColor:'#8b5cf6', name:'', org:'', lastSession:'', nextSession:'', photo:'' },
+            { role:'The Challenger',   roleColor:'#ef4444', name:'', org:'', lastSession:'', nextSession:'', photo:'' },
+            { role:'The Strategist',   roleColor:'#f59e0b', name:'', org:'', lastSession:'', nextSession:'', photo:'' },
+            { role:'The Supporter',    roleColor:'#10b981', name:'', org:'', lastSession:'', nextSession:'', photo:'' }
+        ];
+    }
+    renderAll();
+}
+
+function saveData() {
+    localStorage.setItem('selfDevPassport_v2', JSON.stringify(data));
+    showNotification('✅ Saved!');
+    renderDashboardStats();
+}
+
+function collectFormData(section) {
+    if (section === 'skills') {
+        // ratings are saved immediately on click — nothing to collect
+    } else if (section === 'mentor') {
+        // table5 fields are saved immediately on input — nothing to collect
+    } else if (section === 'about') {
+        ['brand','conflict'].forEach(f => {
+            const el = document.getElementById('about-' + f);
+            if (el) data.about[f] = el.value;
+        });
+        const sdi = document.getElementById('about-sdi');
+        if (sdi) data.about.sdi = sdi.value;
+        // swot items are saved immediately on add/remove — no collection needed
+    } else if (section === 'performance') {
+        data.performance.score = document.getElementById('perf-score')?.value ?? 5;
+        data.performance.date  = document.getElementById('perf-date')?.value ?? '';
+        data.performance.notes = document.getElementById('perf-notes')?.value ?? '';
+    } else if (section === 'ai') {
+        for (let i = 0; i < 3; i++) {
+            ['title','problem','approach','outcome'].forEach(f => {
+                const el = document.getElementById(`ai-${f}-${i}`);
+                if (el) data.ai[i][f] = el.value;
+            });
+        }
+    }
+}
+
+function saveSection(section) {
+    collectFormData(section);
+    data.completedSections[section] = true;
+    saveData();
+    updateNavChecks();
+    updateDashboardProgress();
+}
+
+// ── Notification ──────────────────────────────────────────────────────────────
+function showNotification(msg) {
+    const el = document.getElementById('save-notification');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── Navigation ──────────────────────────────────────────────────────────────
+const PAGE_ORDER = ['dashboard','skills','about','stakeholder','mentor','ai','performance','calendar','end'];
+
+function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page)?.classList.add('active');
+    const idx = PAGE_ORDER.indexOf(page);
+    if (idx >= 0) document.querySelectorAll('.nav-item')[idx]?.classList.add('active');
+    if (page === 'end') updateEndPage();
+}
+
+function updateNavChecks() {
+    ['skills','about','stakeholder','mentor','ai','performance'].forEach(s => {
+        const el = document.getElementById('check-' + s);
+        if (el) el.textContent = data.completedSections[s] ? '✓' : '';
+    });
+}
+
+// ── Dashboard progress ────────────────────────────────────────────────────────
+function updateDashboardProgress() {
+    const sections = [
+        { key:'skills',      label:'Skills',           icon:'⭐' },
+        { key:'about',       label:'About Me',          icon:'👤' },
+        { key:'stakeholder', label:'Stakeholder Map',   icon:'🗺️' },
+        { key:'mentor',      label:'Mentor & Coach',    icon:'🤝' },
+        { key:'ai',          label:'AI Use Cases',      icon:'🤖' },
+        { key:'performance', label:'Performance',       icon:'📈' }
+    ];
+    const grid = document.getElementById('progress-grid');
+    if (!grid) return;
+    grid.innerHTML = sections.map(s => {
+        const pct = data.completedSections[s.key] ? 100 : getSectionProgress(s.key);
+        return `
+        <div class="progress-card" onclick="showPage('${s.key}')">
+            <div class="section-icon">${s.icon}</div>
+            <h4>${s.label}</h4>
+            <div class="progress-bar-container"><div class="progress-bar" style="width:${pct}%"></div></div>
+            <div class="progress-label">${pct}% complete</div>
+        </div>`;
+    }).join('');
+}
+
+function getSectionProgress(s) {
+    if (s === 'skills') {
+        const rated = SKILL_CATS.flatMap(c=>c.skills).filter(sk=>(data.skillRatings2||{})[sk]?.today>0).length;
+        return Math.round(rated / SKILL_CATS.flatMap(c=>c.skills).length * 100);
+    }
+    if (s === 'about') {
+        const fields = [data.about.name, data.about.role, data.about.brand, data.about.sdi,
+                        data.values.length > 0, data.swot.s?.length > 0, data.swot.w?.length > 0, data.swot.o?.length > 0, data.swot.t?.length > 0];
+        return Math.round(fields.filter(Boolean).length / fields.length * 100);
+    }
+    if (s === 'stakeholder') return Math.min(data.stakeholders.length * 20 + data.pdp.length * 10, 100);
+    if (s === 'mentor')      return Math.min(data.mentors.length * 34, 100);
+    if (s === 'ai')          return Math.round(data.ai.filter(a => a.title).length / 3 * 100);
+    if (s === 'performance') return data.feedbackLog.length > 0 ? 100 : 0;
+    return 0;
+}
+
+function renderDashboardStats() {
+    const el = document.getElementById('dashboard-stats');
+    if (!el) return;
+    const rated = SKILL_CATS.flatMap(c => c.skills).filter(s => (data.skillRatings2||{})[s]?.today > 0).length;
+    const total = SKILL_CATS.flatMap(c => c.skills).length;
+    const items = [
+        { icon:'⭐', label:'Skills Rated',      value:`${rated}/${total}` },
+        { icon:'📚', label:'Learnings',          value: data.learnings.length },
+        { icon:'🤝', label:'Network',            value: data.network.length },
+        { icon:'📅', label:'Calendar Entries',   value: Object.values(data.calendar||{}).reduce((s,a)=>s+a.length,0) },
+        { icon:'📝', label:'Feedback Entries',   value: data.feedbackLog.length },
+        { icon:'🎯', label:'PDP Objectives',     value: data.pdp.length },
+    ];
+    el.innerHTML = items.map(item => `
+        <div style="background:rgba(14,14,46,0.8); border:1px solid rgba(0,245,255,0.15); border-radius:12px; padding:18px; text-align:center; backdrop-filter:blur(8px);">
+            <div style="font-size:1.6rem; margin-bottom:6px;">${item.icon}</div>
+            <div style="font-size:1.5rem; font-weight:bold; color:var(--cyan); font-family:'Orbitron',monospace; text-shadow:0 0 10px var(--cyan);">${item.value}</div>
+            <div style="font-size:0.72rem; color:var(--muted); margin-top:4px;">${item.label}</div>
+        </div>`).join('');
+}
+
+// ── Skill Categories ─────────────────────────────────────────────────────────
+const SKILL_CATS = [
+    {
+        key: 'foundational', label: 'Foundational Skills', icon: '👤',
+        bg: '#152238', color: '#ffffff',
+        skills: ['Effective Communications','Business Acumen','Value Management','Overcoming Objections','Resilience','Accountability','Competitive Positioning','Influencing','Complex Problem Solving','Collaboration & X-role teaming','Customer Focus','Adaptability to Feedback','Selling Techniques','Stakeholder Management']
+    },
+    {
+        key: 'knowledge', label: 'Knowledge Domains Skills', icon: '🖥️',
+        bg: '#5c4a1a', color: '#ffffff',
+        skills: ['SAP Solutions Knowledge','Cloud Strategy','Go-to-Market (GTM) Strategy','AI & Innovation Enablement','Financial Acumen','Industry Knowledge','Customer Value Journey','Coaching']
+    },
+    {
+        key: 'roleSpecific', label: 'Role-Specific Skills', icon: '📋',
+        bg: '#0d4a42', color: '#ffffff',
+        skills: ['Storytelling','Demonstration & Presentation','Creative Thinking','Customer Engagement']
+    }
+];
+
+function renderSkillCategories() {
+    const grid = document.getElementById('skills-cat-grid');
+    if (!grid) return;
+    if (!data.skillRatings2) data.skillRatings2 = {};
+    grid.innerHTML = SKILL_CATS.map(cat => `
+        <div>
+            <div class="skill-cat-header" style="background:${cat.bg}; color:${cat.color};">
+                ${cat.icon} ${cat.label}
+            </div>
+            <table class="skill-cat-table">
+                <thead><tr>
+                    <th style="width:45%;">Skill</th>
+                    <th style="text-align:center;">Starting</th>
+                    <th style="text-align:center;">Target</th>
+                    <th style="text-align:center;">Actual</th>
+                </tr></thead>
+                <tbody>
+                    ${cat.skills.map(skill => {
+                        const r = data.skillRatings2[skill] || { today:0, target:0, actual:0 };
+                        return `<tr>
+                            <td>${escHtml(skill)}</td>
+                            <td style="text-align:center;">
+                                <div class="rc-wrap" style="justify-content:center;">
+                                    ${[1,2,3,4,5].map(i =>
+                                        `<div class="rc ${i<=r.today?'filled-today':''}" onclick="setSkillRating2('${escAttr(skill)}','today',${i})"></div>`
+                                    ).join('')}
+                                </div>
+                            </td>
+                            <td style="text-align:center;">
+                                <div class="rc-wrap" style="justify-content:center;">
+                                    ${[1,2,3,4,5].map(i =>
+                                        `<div class="rc ${i<=r.target?'filled-target':''}" onclick="setSkillRating2('${escAttr(skill)}','target',${i})"></div>`
+                                    ).join('')}
+                                </div>
+                            </td>
+                            <td style="text-align:center;">
+                                <div class="rc-wrap" style="justify-content:center;">
+                                    ${[1,2,3,4,5].map(i =>
+                                        `<div class="rc is-actual ${i<=r.actual?'filled-actual':''}" onclick="setSkillRating2('${escAttr(skill)}','actual',${i})"></div>`
+                                    ).join('')}
+                                </div>
+                            </td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>`).join('');
+}
+
+function setSkillRating2(skill, type, val) {
+    if (!data.skillRatings2) data.skillRatings2 = {};
+    if (!data.skillRatings2[skill]) data.skillRatings2[skill] = { today:0, target:0, actual:0 };
+    if (data.skillRatings2[skill].actual === undefined) data.skillRatings2[skill].actual = 0;
+    // clicking the same value again resets to 0
+    data.skillRatings2[skill][type] = data.skillRatings2[skill][type] === val ? 0 : val;
+    renderSkillCategories();
+    saveData();
+}
+
+// ── Table of 5 ────────────────────────────────────────────────────────────────
+function renderTable5() {
+    const grid = document.getElementById('t5-grid');
+    if (!grid) return;
+    if (!data.table5) return;
+    grid.innerHTML = data.table5.map((seat, i) => {
+        const initials = seat.name
+            ? seat.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+            : '?';
+        const avatarContent = seat.photo
+            ? `<img src="${seat.photo}" alt="${escHtml(seat.name)}">`
+            : `<span>${initials}</span>`;
+        return `
+        <div class="t5-card">
+            <div>
+                <div class="t5-avatar" onclick="triggerT5Photo(${i})" title="Click to upload photo"
+                     style="background:linear-gradient(135deg,${seat.roleColor}88,${seat.roleColor}44);">
+                    ${avatarContent}
+                </div>
+                <input type="file" id="t5-photo-${i}" accept="image/*" style="display:none;"
+                       onchange="uploadT5Photo(event,${i})">
+                <div class="t5-upload-hint">click to upload</div>
+            </div>
+            <div class="t5-body">
+                <input class="t5-name-input" type="text" placeholder="[Name]"
+                       value="${escAttr(seat.name)}"
+                       oninput="updateT5(${i},'name',this.value)">
+                <span class="t5-meta-label">Organisation / Role</span>
+                <input class="t5-meta-input" type="text" placeholder="Their role or organisation…"
+                       value="${escAttr(seat.org)}"
+                       oninput="updateT5(${i},'org',this.value)">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px;">
+                    <div>
+                        <span class="t5-meta-label">Last Session</span>
+                        <input class="t5-meta-input" type="text" placeholder="e.g. 1 week ago"
+                               value="${escAttr(seat.lastSession)}"
+                               oninput="updateT5(${i},'lastSession',this.value)">
+                    </div>
+                    <div>
+                        <span class="t5-meta-label">Next Session</span>
+                        <input class="t5-meta-input" type="text" placeholder="e.g. Friday"
+                               value="${escAttr(seat.nextSession)}"
+                               oninput="updateT5(${i},'nextSession',this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function updateT5(i, field, value) {
+    if (!data.table5[i]) return;
+    data.table5[i][field] = value;
+    // update avatar initials in-place to avoid re-render losing input focus
+    if (field === 'name' && !data.table5[i].photo) {
+        const cards = document.querySelectorAll('#t5-grid .t5-card');
+        const avatar = cards[i]?.querySelector('.t5-avatar');
+        if (avatar) {
+            const initials = value ? value.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '?';
+            avatar.innerHTML = `<span>${initials}</span>`;
+        }
+    }
+    saveData();
+}
+
+function triggerT5Photo(i) {
+    document.getElementById(`t5-photo-${i}`)?.click();
+}
+
+function uploadT5Photo(event, i) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        data.table5[i].photo = e.target.result;
+        renderTable5();
+        saveData();
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+}
+
+// ── Network ───────────────────────────────────────────────────────────────────
+function renderNetwork() {
+    const list = document.getElementById('network-list');
+    if (!list) return;
+    if (!data.network.length) {
+        list.innerHTML = '<p style="color:#8899aa; font-size:0.88rem;">No connections yet. Add your first network member below.</p>';
+        return;
+    }
+    list.innerHTML = data.network.map((m, i) => `
+        <div class="network-item">
+            <div class="avatar">${m.name.charAt(0).toUpperCase()}</div>
+            <div style="flex:1;">
+                <div style="font-weight:600;">${escHtml(m.name)}</div>
+                <div style="color:#8899aa; font-size:0.84rem;">${escHtml(m.role)}${m.org ? ' · ' + escHtml(m.org) : ''}</div>
+            </div>
+            <button class="btn btn-danger" onclick="removeNetwork(${i})">Remove</button>
+        </div>`).join('');
+}
+
+function addNetworkMember() {
+    const name = val('network-name'), role = val('network-role'), org = val('network-org');
+    if (!name) return;
+    data.network.push({ name, role, org });
+    clear('network-name','network-role','network-org');
+    renderNetwork(); saveData();
+}
+
+function removeNetwork(i) { confirmDelete(`Remove "${data.network[i].name}" from your network?`, () => { data.network.splice(i,1); renderNetwork(); saveData(); }); }
+
+// ── Skills ───────────────────────────────────────────────────────────────────
+function renderSkills() {
+    const list = document.getElementById('skills-list');
+    if (!list) return;
+    list.innerHTML = data.skills.map((skill, i) => {
+        const rating = data.skillRatings[skill] || 0;
+        return `
+        <div class="skill-row">
+            <div class="skill-name">${escHtml(skill)}</div>
+            <div class="skill-rating" id="stars-${i}">
+                ${[1,2,3,4,5].map(s =>
+                    `<span class="star${s <= rating ? ' active':''}" onclick="setRating('${escAttr(skill)}',${s},${i})">★</span>`
+                ).join('')}
+            </div>
+            <button class="btn btn-danger" onclick="removeSkill(${i})">✕</button>
+        </div>`;
+    }).join('');
+    renderSkillsBars();
+}
+
+function renderSkillsBars() {
+    const el = document.getElementById('skills-progress-bars');
+    if (!el) return;
+    if (!data.skills.length) {
+        el.innerHTML = '<p style="color:var(--muted); font-size:0.85rem;">No skills yet — add one below.</p>';
+        return;
+    }
+    const levelLabel = ['','Beginner','Developing','Competent','Proficient','Expert'];
+    const levelColor = ['','#ff3c64','#ff9800','var(--cyan)','var(--purple)','var(--magenta)'];
+    el.innerHTML = data.skills.map(skill => {
+        const r = data.skillRatings[skill] || 0;
+        const pct = r * 20;
+        const color = levelColor[r] || 'rgba(255,255,255,0.2)';
+        return `
+        <div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:0.85rem;">${escHtml(skill)}</span>
+                <span style="font-size:0.72rem; color:${color}; font-family:'Orbitron',sans-serif;">${r ? levelLabel[r] : 'Not rated'}</span>
+            </div>
+            <div style="background:rgba(255,255,255,0.06); border-radius:10px; height:7px; overflow:hidden;">
+                <div style="width:${pct}%; height:100%; background:linear-gradient(90deg,${color},${color}99); border-radius:10px; transition:width 0.5s; box-shadow:0 0 6px ${color};"></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function setRating(skill, rating, idx) {
+    data.skillRatings[skill] = rating;
+    document.querySelectorAll(`#stars-${idx} .star`).forEach((s,i) => s.classList.toggle('active', i < rating));
+    renderSkillsBars();
+    saveData();
+}
+
+function addSkill() {
+    const v = val('new-skill');
+    if (v && !data.skills.includes(v)) { data.skills.push(v); clear('new-skill'); renderSkills(); saveData(); }
+}
+
+function removeSkill(i) {
+    confirmDelete(`Remove the skill "${data.skills[i]}"?`, () => {
+        delete data.skillRatings[data.skills[i]];
+        data.skills.splice(i,1); renderSkills(); saveData();
+    });
+}
+
+// ── Learnings Tracker ────────────────────────────────────────────────────────
+const LEARNING_STATUSES = ['Not Started', 'In Progress', 'Completed'];
+const STATUS_COLOR = { 'Not Started': '#6a7a9b', 'In Progress': 'var(--cyan)', 'Completed': '#00ff88' };
+const STATUS_PCT   = { 'Not Started': 0, 'In Progress': 50, 'Completed': 100 };
+
+function renderLearnings() {
+    const el = document.getElementById('learnings-list');
+    if (!el) return;
+    if (!data.learnings.length) {
+        el.innerHTML = '<p style="color:var(--muted); font-size:0.85rem;">No learnings yet — add a course, book, or certification below.</p>';
+        return;
+    }
+    const typeIcon = { Course:'📖', Book:'📗', Certification:'🏅', Workshop:'🛠️', Other:'💡' };
+    el.innerHTML = data.learnings.map((item, i) => {
+        const color = STATUS_COLOR[item.status];
+        const pct   = STATUS_PCT[item.status];
+        return `
+        <div style="padding:10px 12px; background:rgba(4,4,15,0.6); border:1px solid rgba(0,245,255,0.08); border-radius:8px; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                <span style="font-size:1rem;">${typeIcon[item.type] || '💡'}</span>
+                <span style="flex:1; font-size:0.88rem; font-weight:600;">${escHtml(item.title)}</span>
+                <select onchange="updateLearningStatus(${i}, this.value)"
+                    style="margin:0; padding:3px 8px; font-size:0.75rem; width:130px; border-color:${color}; color:${color}; background:rgba(4,4,15,0.9);">
+                    ${LEARNING_STATUSES.map(s =>
+                        `<option value="${s}" ${item.status===s?'selected':''}>${s}</option>`
+                    ).join('')}
+                </select>
+                <button class="btn btn-danger" onclick="removeLearning(${i})">✕</button>
+            </div>
+            <div style="background:rgba(255,255,255,0.06); border-radius:10px; height:5px; overflow:hidden;">
+                <div style="width:${pct}%; height:100%; background:linear-gradient(90deg,${color},${color}88); border-radius:10px; transition:width 0.4s; box-shadow:0 0 5px ${color};"></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function addLearning() {
+    const title = val('new-learning-title');
+    if (!title) return;
+    const type = document.getElementById('new-learning-type').value;
+    data.learnings.push({ title, type, status: 'Not Started' });
+    clear('new-learning-title');
+    renderLearnings(); saveData();
+}
+
+function updateLearningStatus(i, status) {
+    data.learnings[i].status = status;
+    renderLearnings(); saveData();
+}
+
+function removeLearning(i) {
+    confirmDelete(`Remove "${data.learnings[i].title}" from your learnings?`, () => {
+        data.learnings.splice(i, 1); renderLearnings(); saveData();
+    });
+}
+
+// ── Photo upload ─────────────────────────────────────────────────────────────
+function uploadPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        data.photo = e.target.result;
+        applyPhoto(data.photo);
+        saveData();
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+}
+
+function applyPhoto(src) {
+    const img = document.getElementById('photo-img');
+    const placeholder = document.getElementById('photo-placeholder');
+    if (!img || !placeholder) return;
+    if (src) {
+        img.src = src;
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+    } else {
+        img.style.display = 'none';
+        placeholder.style.display = '';
+    }
+}
+
+// ── About Me ──────────────────────────────────────────────────────────────────
+function renderAbout() {
+    ['brand','sdi','conflict'].forEach(f => {
+        const el = document.getElementById('about-' + f);
+        if (el) el.value = data.about[f] || '';
+    });
+    renderSwot();
+    applyPhoto(data.photo || '');
+    renderValues();
+}
+
+function renderSwot() {
+    const bulletColor = { s:'#00ff88', w:'#ff3c64', o:'var(--cyan)', t:'var(--magenta)' };
+    ['s','w','o','t'].forEach(q => {
+        const el = document.getElementById('swot-list-' + q);
+        if (!el) return;
+        const items = Array.isArray(data.swot[q]) ? data.swot[q] : [];
+        if (!items.length) {
+            el.innerHTML = '<div style="color:var(--muted); font-size:0.8rem; font-style:italic; padding:4px 0;">No items yet.</div>';
+            return;
+        }
+        el.innerHTML = items.map((item, i) => `
+            <div class="swot-item">
+                <span class="bullet" style="color:${bulletColor[q]};">▸</span>
+                <span class="item-text">${escHtml(item)}</span>
+                <button class="remove-btn" onclick="removeSwotItem('${q}',${i})" title="Remove">✕</button>
+            </div>`).join('');
+    });
+}
+
+function addSwotItem(q) {
+    const input = document.getElementById('swot-input-' + q);
+    const text = (input?.value || '').trim();
+    if (!text) return;
+    if (!Array.isArray(data.swot[q])) data.swot[q] = [];
+    data.swot[q].push(text);
+    input.value = '';
+    renderSwot();
+    saveData();
+}
+
+function removeSwotItem(q, i) {
+    confirmDelete(`Remove "${data.swot[q][i]}" from this quadrant?`, () => {
+        data.swot[q].splice(i, 1);
+        renderSwot();
+        saveData();
+    });
+}
+
+// allow Enter key to add swot items
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('swot-input-')) {
+        const q = e.target.id.replace('swot-input-', '');
+        addSwotItem(q);
+    }
+});
+
+function renderValues() {
+    const list = document.getElementById('values-list');
+    if (!list) return;
+    list.innerHTML = data.values.map((v, i) =>
+        `<span class="value-pill">${escHtml(v)}<span onclick="removeValue(${i})">✕</span></span>`
+    ).join('');
+}
+
+function addValue() {
+    const v = val('new-value');
+    if (v && !data.values.includes(v)) { data.values.push(v); clear('new-value'); renderValues(); saveData(); }
+}
+
+function removeValue(i) { confirmDelete(`Remove the value "${data.values[i]}"?`, () => { data.values.splice(i,1); renderValues(); saveData(); }); }
+
+// ── Stakeholders ──────────────────────────────────────────────────────────────
+function renderStakeholders() {
+    const tbody  = document.getElementById('stakeholder-table');
+    const bubbles = document.getElementById('stakeholder-bubbles');
+    if (!tbody) return;
+    tbody.innerHTML = data.stakeholders.length
+        ? data.stakeholders.map((s,i) => `
+            <tr>
+                <td><strong>${escHtml(s.name)}</strong></td>
+                <td>${escHtml(s.role)}</td>
+                <td><span class="stakeholder-bubble influence-${s.influence.toLowerCase()}">${s.influence}</span></td>
+                <td>${escHtml(s.relationship)}</td>
+                <td><button class="btn btn-danger" onclick="removeStakeholder(${i})">✕</button></td>
+            </tr>`).join('')
+        : '<tr><td colspan="5" style="color:#8899aa; text-align:center; padding:16px;">No stakeholders added yet</td></tr>';
+    if (bubbles) bubbles.innerHTML = data.stakeholders.map(s =>
+        `<span class="stakeholder-bubble influence-${s.influence.toLowerCase()}">${escHtml(s.name)}</span>`).join('');
+}
+
+function addStakeholder() {
+    const sh = { name: val('sh-name'), role: val('sh-role'), influence: document.getElementById('sh-influence').value, relationship: val('sh-relationship') };
+    if (!sh.name) return;
+    data.stakeholders.push(sh);
+    clear('sh-name','sh-role','sh-relationship');
+    renderStakeholders(); saveData();
+}
+
+function removeStakeholder(i) { confirmDelete(`Remove "${data.stakeholders[i].name}" from your stakeholders?`, () => { data.stakeholders.splice(i,1); renderStakeholders(); saveData(); }); }
+
+// ── Engagement ────────────────────────────────────────────────────────────────
+function renderEngagement() {
+    const tbody = document.getElementById('engagement-table');
+    if (!tbody) return;
+    tbody.innerHTML = data.engagements.length
+        ? data.engagements.map((e,i) => `
+            <tr>
+                <td>${escHtml(e.stakeholder)}</td>
+                <td>${escHtml(e.strategy)}</td>
+                <td>${escHtml(e.frequency)}</td>
+                <td>${escHtml(e.goal)}</td>
+                <td><button class="btn btn-danger" onclick="removeEngagement(${i})">✕</button></td>
+            </tr>`).join('')
+        : '<tr><td colspan="5" style="color:#8899aa; text-align:center; padding:16px;">No engagements added yet</td></tr>';
+}
+
+function addEngagement() {
+    const eng = { stakeholder: val('eng-stakeholder'), strategy: val('eng-strategy'), frequency: val('eng-frequency'), goal: val('eng-goal') };
+    if (!eng.stakeholder) return;
+    data.engagements.push(eng);
+    clear('eng-stakeholder','eng-strategy','eng-frequency','eng-goal');
+    renderEngagement(); saveData();
+}
+
+function removeEngagement(i) { confirmDelete(`Remove the engagement with "${data.engagements[i].stakeholder}"?`, () => { data.engagements.splice(i,1); renderEngagement(); saveData(); }); }
+
+// ── 90-Day PDP ────────────────────────────────────────────────────────────────
+function renderPDP() {
+    const container = document.getElementById('pdp-timeline');
+    if (!container) return;
+    if (!data.pdp.length) {
+        container.innerHTML = '<p style="color:#8899aa; font-size:0.88rem; padding-left:10px;">No objectives added yet.</p>';
+        return;
+    }
+    const phases = ['Day 1–30','Day 31–60','Day 61–90'];
+    container.innerHTML = phases.map(phase => {
+        const items = data.pdp.filter(p => p.phase === phase);
+        if (!items.length) return '';
+        return `<div class="timeline-item">
+            <div class="timeline-phase">${phase}</div>
+            ${items.map(p => `
+                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
+                    <div>
+                        <div style="font-weight:600; margin-bottom:3px;">${escHtml(p.objective)}</div>
+                        <div style="color:#8899aa; font-size:0.84rem;">📏 ${escHtml(p.measure)}</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="removePDP(${data.pdp.indexOf(p)})">✕</button>
+                </div>`).join('')}
+        </div>`;
+    }).join('');
+}
+
+function addPDP() {
+    const item = { phase: document.getElementById('pdp-phase').value, objective: val('pdp-objective'), measure: val('pdp-measure') };
+    if (!item.objective) return;
+    data.pdp.push(item);
+    clear('pdp-objective','pdp-measure');
+    renderPDP(); saveData();
+}
+
+function removePDP(i) { confirmDelete(`Remove the objective "${data.pdp[i].objective}"?`, () => { data.pdp.splice(i,1); renderPDP(); saveData(); }); }
+
+// ── Key Activities ────────────────────────────────────────────────────────────
+function renderActivities() {
+    const list = document.getElementById('activities-list');
+    if (!list) return;
+    if (!data.activities.length) {
+        list.innerHTML = '<p style="color:#8899aa; font-size:0.88rem;">No activities added yet.</p>';
+        return;
+    }
+    list.innerHTML = data.activities.map((a,i) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#0a1628; border-radius:6px; margin-bottom:7px;">
+            <span><span style="color:#c9a84c; margin-right:8px;">▸</span>${escHtml(a)}</span>
+            <button class="btn btn-danger" onclick="removeActivity(${i})">✕</button>
+        </div>`).join('');
+}
+
+function addActivity() {
+    const v = val('new-activity');
+    if (v) { data.activities.push(v); clear('new-activity'); renderActivities(); saveData(); }
+}
+
+function removeActivity(i) { confirmDelete(`Remove the activity "${data.activities[i]}"?`, () => { data.activities.splice(i,1); renderActivities(); saveData(); }); }
+
+// ── Mentors ───────────────────────────────────────────────────────────────────
+function renderMentors() {
+    const list = document.getElementById('mentors-list');
+    if (!list) return;
+    if (!data.mentors.length) {
+        list.innerHTML = '<p style="color:#8899aa; font-size:0.88rem;">No mentors or coaches added yet.</p>';
+        return;
+    }
+    list.innerHTML = data.mentors.map((m,i) => `
+        <div class="mentor-card">
+            <div class="mentor-avatar">${m.name.charAt(0).toUpperCase()}</div>
+            <div class="mentor-info" style="flex:1;">
+                <h4>${escHtml(m.name)}</h4>
+                <div class="mentor-role">${m.type}${m.org ? ' · ' + escHtml(m.org) : ''}</div>
+                <div class="mentor-focus">${m.frequency ? m.frequency + ' · ' : ''}${escHtml(m.focus)}</div>
+            </div>
+            <button class="btn btn-danger" onclick="removeMentor(${i})">Remove</button>
+        </div>`).join('');
+}
+
+function addMentor() {
+    const m = {
+        name:      val('mentor-name'),
+        type:      document.getElementById('mentor-type').value,
+        org:       val('mentor-org'),
+        frequency: val('mentor-frequency'),
+        focus:     val('mentor-focus')
+    };
+    if (!m.name) return;
+    data.mentors.push(m);
+    clear('mentor-name','mentor-org','mentor-frequency','mentor-focus');
+    renderMentors(); saveData();
+}
+
+function removeMentor(i) { confirmDelete(`Remove "${data.mentors[i].name}" from your mentor structure?`, () => { data.mentors.splice(i,1); renderMentors(); saveData(); }); }
+
+// ── AI Use Cases ──────────────────────────────────────────────────────────────
+function renderAI() {
+    const container = document.getElementById('ai-cases');
+    if (!container) return;
+    container.innerHTML = data.ai.map((ai,i) => `
+        <div class="card" style="border-left:4px solid #c9a84c;">
+            <div class="case-number">Use Case #${i+1}</div>
+            <div class="form-group"><label>Title / AI Tool</label><input type="text" id="ai-title-${i}" placeholder="e.g. ChatGPT for report writing" value="${escAttr(ai.title)}"></div>
+            <div class="form-group"><label>Problem / Challenge it Solves</label><textarea id="ai-problem-${i}" placeholder="What challenge does this AI address?">${escHtml(ai.problem)}</textarea></div>
+            <div class="two-col">
+                <div class="form-group"><label>How You Use It</label><textarea id="ai-approach-${i}" placeholder="Describe your approach…">${escHtml(ai.approach)}</textarea></div>
+                <div class="form-group"><label>Expected Outcome / Benefit</label><textarea id="ai-outcome-${i}" placeholder="What result do you expect?">${escHtml(ai.outcome)}</textarea></div>
+            </div>
+        </div>`).join('');
+}
+
+// ── Performance ───────────────────────────────────────────────────────────────
+function renderPerformance() {
+    const scoreEl = document.getElementById('perf-score');
+    if (scoreEl) { scoreEl.value = data.performance.score; document.getElementById('perf-score-val').textContent = data.performance.score; }
+    const dateEl  = document.getElementById('perf-date');  if (dateEl)  dateEl.value  = data.performance.date  || '';
+    const notesEl = document.getElementById('perf-notes'); if (notesEl) notesEl.value = data.performance.notes || '';
+    renderFeedbackLog();
+}
+
+function renderFeedbackLog() {
+    const log = document.getElementById('feedback-log');
+    if (!log) return;
+    if (!data.feedbackLog.length) {
+        log.innerHTML = '<p style="color:#8899aa; font-size:0.88rem;">No entries yet. Add your first log entry below.</p>';
+        return;
+    }
+    const typeLabel = { feedback:'Feedback', achievement:'Achievement', goal:'Goal Update' };
+    log.innerHTML = [...data.feedbackLog].reverse().map((entry, revIdx) => {
+        const idx = data.feedbackLog.length - 1 - revIdx;
+        return `
+        <div class="log-entry">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span>
+                    <span class="log-date">${entry.date || 'No date'}</span>
+                    <span class="log-type type-${entry.type}">${typeLabel[entry.type] || entry.type}</span>
+                </span>
+                <button class="btn btn-danger" onclick="removeLogEntry(${idx})">✕</button>
+            </div>
+            ${entry.source ? `<div style="color:#8899aa; font-size:0.84rem; margin-bottom:5px;">📌 ${escHtml(entry.source)}</div>` : ''}
+            <div style="margin-bottom:5px; line-height:1.5;">${escHtml(entry.details)}</div>
+            ${entry.action ? `<div style="color:#c9a84c; font-size:0.84rem; margin-top:4px;">→ ${escHtml(entry.action)}</div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function addLogEntry() {
+    const entry = {
+        date:    document.getElementById('log-date').value,
+        type:    document.getElementById('log-type').value,
+        source:  val('log-source'),
+        details: val('log-details'),
+        action:  val('log-action')
+    };
+    if (!entry.details) return;
+    data.feedbackLog.push(entry);
+    clear('log-source','log-details','log-action');
+    document.getElementById('log-date').value = '';
+    renderFeedbackLog(); saveData();
+}
+
+function removeLogEntry(i) { confirmDelete('Delete this log entry? This cannot be undone.', () => { data.feedbackLog.splice(i,1); renderFeedbackLog(); saveData(); }); }
+
+// ── End Page ──────────────────────────────────────────────────────────────────
+function updateEndPage() {
+    const reflEl = document.getElementById('reflection');
+    if (reflEl) reflEl.value = data.reflection || '';
+
+    const stats = document.getElementById('end-stats');
+    if (!stats) return;
+    const items = [
+        { label:'Network Connections', value: data.network.length,     icon:'🤝' },
+        { label:'Skills Assessed',     value: data.skills.length,      icon:'⭐' },
+        { label:'Stakeholders Mapped', value: data.stakeholders.length, icon:'🗺️' },
+        { label:'PDP Objectives',      value: data.pdp.length,          icon:'🎯' },
+        { label:'Mentors & Coaches',   value: data.mentors.length,      icon:'👥' },
+        { label:'Feedback Entries',    value: data.feedbackLog.length,  icon:'📝' }
+    ];
+    stats.innerHTML = items.map(item => `
+        <div style="background:rgba(14,14,46,0.8); border:1px solid rgba(0,245,255,0.2); border-radius:10px; padding:18px; min-width:110px; text-align:center; backdrop-filter:blur(8px);">
+            <div style="font-size:1.6rem; margin-bottom:5px;">${item.icon}</div>
+            <div style="font-size:1.7rem; font-weight:bold; color:var(--cyan); text-shadow:0 0 10px var(--cyan);">${item.value}</div>
+            <div style="font-size:0.72rem; color:var(--muted);">${item.label}</div>
+        </div>`).join('');
+}
+
+function saveReflection() {
+    data.reflection = document.getElementById('reflection')?.value || '';
+    saveData();
+}
+
+const PDF_SECTIONS = [
+    { key:'about',       label:'About Me',                     icon:'👤' },
+    { key:'stakeholder', label:'Engagement & Development Plan', icon:'📋' },
+    { key:'mentor',      label:'Mentor & Coach Structure',     icon:'🤝' },
+    { key:'table5',      label:'Table of 5',                   icon:'👥' },
+    { key:'ai',          label:'AI Use Cases',                 icon:'🤖' },
+    { key:'performance', label:'Performance & Feedback Log',   icon:'📈' },
+    { key:'skills',      label:'Network & Skills',             icon:'🎓' },
+    { key:'calendar',    label:'Activity Calendar',            icon:'📅' },
+    { key:'reflection',  label:'Reflection',                   icon:'✍️' },
+];
+
+function saveAsPDF() { openPDFModal(); }
+
+function openPDFModal() {
+    const list = document.getElementById('pdf-section-list');
+    list.innerHTML = PDF_SECTIONS.map(s => `
+        <label style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; cursor:pointer; transition:background 0.15s;"
+               onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+          <input type="checkbox" checked data-key="${s.key}"
+            style="width:16px; height:16px; accent-color:#c9a84c; cursor:pointer; flex-shrink:0;">
+          <span style="font-size:1.1rem;">${s.icon}</span>
+          <span style="color:#e0e0e0; font-size:0.88rem;">${s.label}</span>
+        </label>`).join('');
+    document.getElementById('pdf-toggle-all-btn').textContent = 'Deselect All';
+    document.getElementById('pdf-overlay').style.display = 'flex';
+}
+
+function closePDFModal() {
+    document.getElementById('pdf-overlay').style.display = 'none';
+}
+
+function pdfToggleAll() {
+    const boxes = document.querySelectorAll('#pdf-section-list input[type=checkbox]');
+    const anyChecked = [...boxes].some(b => b.checked);
+    boxes.forEach(b => b.checked = !anyChecked);
+    document.getElementById('pdf-toggle-all-btn').textContent = anyChecked ? 'Select All' : 'Deselect All';
+}
+
+document.getElementById('pdf-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closePDFModal();
+});
+
+function generateSelectedPDF() {
+    const sel = {};
+    document.querySelectorAll('#pdf-section-list input[type=checkbox]').forEach(b => {
+        sel[b.dataset.key] = b.checked;
+    });
+    if (!Object.values(sel).some(Boolean)) {
+        showNotification('⚠️ Select at least one section.');
+        return;
+    }
+    closePDFModal();
+    _buildAndSavePDF(sel);
+}
+
+function _buildAndSavePDF(sel) {
+    showNotification('⏳ Generating PDF…');
+
+    const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+    const typeLabel = { feedback:'Feedback', achievement:'Achievement', goal:'Goal Update' };
+
+    const html = `
+    <div style="font-family:'Segoe UI',Arial,sans-serif; color:#1a1a2e; padding:0; font-size:12px; line-height:1.6;">
+
+      <!-- Cover -->
+      <div style="background:#0d1f3c; color:#fff; padding:60px 40px; text-align:center; margin-bottom:0; page-break-after:always;">
+        <div style="font-size:60px; margin-bottom:16px;">📔</div>
+        <div style="color:#c9a84c; font-size:11px; letter-spacing:4px; text-transform:uppercase; margin-bottom:10px;">Personal Growth Document</div>
+        <h1 style="font-size:32px; color:#fff; margin-bottom:8px;">Self-Development Passport</h1>
+        ${data.about.name ? `<div style="font-size:20px; color:#c9a84c; margin-top:16px;">${data.about.name}</div>` : ''}
+        ${data.about.role ? `<div style="font-size:14px; color:#aaa; margin-top:6px;">${data.about.role}</div>` : ''}
+        <div style="color:#888; font-size:11px; margin-top:30px;">Generated ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>
+      </div>
+
+      <!-- About Me -->
+      <div id="pdf-sec-about" style="padding:30px 40px; page-break-after:always;">
+        <div style="border-bottom:3px solid #c9a84c; margin-bottom:20px; padding-bottom:8px;">
+          <h2 style="color:#0d1f3c; font-size:18px;">👤 About Me</h2>
+        </div>
+        ${data.about.brand ? `
+        <div style="background:#f8f6f0; border-left:4px solid #c9a84c; padding:14px 18px; border-radius:4px; margin-bottom:18px;">
+          <div style="font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Personal Brand Statement</div>
+          <div style="font-style:italic; color:#333;">"${data.about.brand}"</div>
+        </div>` : ''}
+        <table style="width:100%; border-collapse:collapse; margin-bottom:18px;">
+          <tr>
+            <td style="width:50%; padding:8px 12px; background:#f8f6f0; border:1px solid #ddd; vertical-align:top;">
+              <div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:3px;">SDI Personality</div>
+              <div style="font-weight:600;">${data.about.sdi || '—'}</div>
+            </td>
+            <td style="width:50%; padding:8px 12px; background:#f8f6f0; border:1px solid #ddd; vertical-align:top;">
+              <div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:3px;">Conflict Style</div>
+              <div style="font-weight:600;">${data.about.conflict || '—'}</div>
+            </td>
+          </tr>
+        </table>
+        ${data.values.length ? `
+        <div style="margin-bottom:18px;">
+          <div style="font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Core Values</div>
+          <div>${data.values.map(v => `<span style="display:inline-block; background:#fff3cd; border:1px solid #c9a84c; color:#8b6914; padding:4px 12px; border-radius:20px; font-size:11px; margin:3px;">${v}</span>`).join('')}</div>
+        </div>` : ''}
+        <div style="margin-top:18px;">
+          <div style="font-size:14px; font-weight:700; color:#0d1f3c; margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;">SWOT Analysis</div>
+          <table style="width:100%; border-collapse:collapse;">
+            <tr>
+              <td style="width:50%; padding:12px; background:#e8f5e9; border:2px solid #4caf50; vertical-align:top;">
+                <div style="font-weight:700; color:#2e7d32; margin-bottom:6px;">💪 Strengths</div>
+                ${(data.swot.s||[]).length ? (data.swot.s||[]).map(x=>`<div style="font-size:11px; margin-bottom:3px;">▸ ${x}</div>`).join('') : '<div style="font-size:11px;color:#999;">—</div>'}
+              </td>
+              <td style="width:50%; padding:12px; background:#fdecea; border:2px solid #e74c3c; vertical-align:top;">
+                <div style="font-weight:700; color:#c62828; margin-bottom:6px;">⚠️ Weaknesses</div>
+                ${(data.swot.w||[]).length ? (data.swot.w||[]).map(x=>`<div style="font-size:11px; margin-bottom:3px;">▸ ${x}</div>`).join('') : '<div style="font-size:11px;color:#999;">—</div>'}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px; background:#e3f2fd; border:2px solid #2196f3; vertical-align:top;">
+                <div style="font-weight:700; color:#1565c0; margin-bottom:6px;">🌟 Opportunities</div>
+                ${(data.swot.o||[]).length ? (data.swot.o||[]).map(x=>`<div style="font-size:11px; margin-bottom:3px;">▸ ${x}</div>`).join('') : '<div style="font-size:11px;color:#999;">—</div>'}
+              </td>
+              <td style="padding:12px; background:#fff3e0; border:2px solid #ff9800; vertical-align:top;">
+                <div style="font-weight:700; color:#e65100; margin-bottom:6px;">🚧 Threats</div>
+                ${(data.swot.t||[]).length ? (data.swot.t||[]).map(x=>`<div style="font-size:11px; margin-bottom:3px;">▸ ${x}</div>`).join('') : '<div style="font-size:11px;color:#999;">—</div>'}
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Engagement & Development Plan -->
+      <div id="pdf-sec-stakeholder" style="padding:30px 40px; page-break-after:always;">
+        <div style="border-bottom:3px solid #c9a84c; margin-bottom:20px; padding-bottom:8px;">
+          <h2 style="color:#0d1f3c; font-size:18px;">📋 Engagement &amp; Development Plan</h2>
+        </div>
+
+        ${data.engagements.length ? `
+        <div style="margin-bottom:22px;">
+          <div style="font-size:13px; font-weight:700; color:#0d1f3c; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Engagement Plan</div>
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr style="background:#0d1f3c; color:#c9a84c;">
+              <th style="padding:9px 12px; text-align:left; font-size:10px; text-transform:uppercase;">Stakeholder</th>
+              <th style="padding:9px 12px; text-align:left; font-size:10px; text-transform:uppercase;">Strategy</th>
+              <th style="padding:9px 12px; text-align:left; font-size:10px; text-transform:uppercase;">Frequency</th>
+              <th style="padding:9px 12px; text-align:left; font-size:10px; text-transform:uppercase;">Goal</th>
+            </tr></thead>
+            <tbody>${data.engagements.map((e,i) => `
+              <tr style="background:${i%2===0?'#fff':'#f8f6f0'};">
+                <td style="padding:8px 12px; border-bottom:1px solid #eee; font-weight:600;">${e.stakeholder}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #eee;">${e.strategy}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #eee;">${e.frequency}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #eee;">${e.goal}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : ''}
+
+        ${data.pdp.length ? `
+        <div style="margin-bottom:22px;">
+          <div style="font-size:13px; font-weight:700; color:#0d1f3c; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">90-Day Personal Development Plan</div>
+          ${['Day 1–30','Day 31–60','Day 61–90'].map(phase => {
+            const items = data.pdp.filter(p => p.phase === phase);
+            if (!items.length) return '';
+            return `<div style="margin-bottom:12px; border-left:4px solid #c9a84c; padding-left:14px;">
+              <div style="font-size:10px; font-weight:700; color:#c9a84c; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">${phase}</div>
+              ${items.map(p => `<div style="margin-bottom:6px; padding:8px 10px; background:#f8f6f0; border-radius:4px;">
+                <div style="font-weight:600;">${p.objective}</div>
+                <div style="color:#666; font-size:11px; margin-top:2px;">📏 ${p.measure}</div>
+              </div>`).join('')}
+            </div>`;
+          }).join('')}
+        </div>` : ''}
+
+        ${data.activities.length ? `
+        <div>
+          <div style="font-size:13px; font-weight:700; color:#0d1f3c; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">Key Activities</div>
+          ${data.activities.map(a => `<div style="padding:7px 12px; background:#f8f6f0; border-radius:4px; margin-bottom:5px;">▸ ${a}</div>`).join('')}
+        </div>` : ''}
+      </div>
+
+      <!-- Mentor & Coach -->
+      <div id="pdf-sec-mentor" style="padding:30px 40px; page-break-after:always;">
+        <div style="border-bottom:3px solid #c9a84c; margin-bottom:20px; padding-bottom:8px;">
+          <h2 style="color:#0d1f3c; font-size:18px;">🤝 Mentor and Coach Structure</h2>
+        </div>
+        ${data.mentors.length ? data.mentors.map(m => `
+        <div style="display:flex; gap:14px; padding:14px; border:1px solid #ddd; border-radius:8px; margin-bottom:12px; background:#f8f6f0;">
+          <div style="width:48px; height:48px; border-radius:50%; background:#c9a84c; color:#0d1f3c; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:18px; flex-shrink:0;">${m.name.charAt(0).toUpperCase()}</div>
+          <div>
+            <div style="font-weight:700; font-size:13px;">${m.name}</div>
+            <div style="color:#c9a84c; font-size:11px; margin:2px 0;">${m.type}${m.org ? ' · ' + m.org : ''}</div>
+            <div style="color:#555; font-size:11px;">${m.frequency ? m.frequency + ' · ' : ''}${m.focus}</div>
+          </div>
+        </div>`).join('') : '<p style="color:#888; font-style:italic;">No mentors or coaches added.</p>'}
+      </div>
+
+      <!-- Table of 5 -->
+      <div id="pdf-sec-table5" style="padding:30px 40px; page-break-after:always;">
+        <div style="border-bottom:3px solid #c9a84c; margin-bottom:20px; padding-bottom:8px;">
+          <h2 style="color:#0d1f3c; font-size:18px;">👥 Table of 5</h2>
+        </div>
+        ${(data.table5||[]).some(s => s.name) ? `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          ${(data.table5||[]).map(seat => `
+          <div style="border:2px solid ${seat.roleColor}; border-radius:10px; padding:14px; background:#f8f8ff;">
+            <div style="font-size:10px; font-weight:700; color:${seat.roleColor}; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">${seat.role}</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:44px; height:44px; border-radius:50%; background:${seat.roleColor}22; border:2px solid ${seat.roleColor}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; color:${seat.roleColor}; flex-shrink:0;">
+                ${seat.name ? seat.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) : '?'}
+              </div>
+              <div>
+                <div style="font-weight:700; font-size:13px;">${seat.name || '—'}</div>
+                ${seat.org ? `<div style="font-size:11px; color:#666;">${seat.org}</div>` : ''}
+                ${seat.lastSession ? `<div style="font-size:10px; color:#888; margin-top:4px;">Last: ${seat.lastSession}</div>` : ''}
+                ${seat.nextSession ? `<div style="font-size:10px; color:#888;">Next: ${seat.nextSession}</div>` : ''}
+              </div>
+            </div>
+          </div>`).join('')}
+        </div>` : '<p style="color:#888; font-style:italic;">No seats filled yet.</p>'}
+      </div>
+
+      <!-- AI Use Cases -->
+      <div id="pdf-sec-ai" style="padding:30px 40px; page-break-after:always;">
+        <div style="border-bottom:3px solid #c9a84c; margin-bottom:20px; padding-bottom:8px;">
+          <h2 style="color:#0d1f3c; font-size:18px;">🤖 Top 3 AI Use Cases</h2>
+        </div>
+        ${data.ai.filter(a => a.title).map((ai,i) => `
+        <div style="border:1px solid #ddd; border-left:4px solid #c9a84c; border-radius:6px; padding:16px; margin-bottom:16px; background:#f8f6f0;">
+          <div style="font-size:10px; color:#c9a84c; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Use Case #${i+1}</div>
+          <div style="font-size:14px; font-weight:700; margin-bottom:10px;">${ai.title}</div>
+          ${ai.problem ? `<div style="margin-bottom:8px;"><span style="font-size:10px; color:#888; text-transform:uppercase;">Problem: </span>${ai.problem}</div>` : ''}
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+            ${ai.approach ? `<div style="padding:8px; background:#fff; border-radius:4px;"><div style="font-size:10px; color:#888; margin-bottom:3px; text-transform:uppercase;">How I Use It</div>${ai.approach}</div>` : ''}
+            ${ai.outcome  ? `<div style="padding:8px; background:#fff; border-radius:4px;"><div style="font-size:10px; color:#888; margin-bottom:3px; text-transform:uppercase;">Expected Outcome</div>${ai.outcome}</div>` : ''}
+          </div>
+        </div>`).join('') || '<p style="color:#888; font-style:italic;">No AI use cases added.</p>'}
+      </div>
+
+      <!-- Performance & Feedback -->
+      <div id="pdf-sec-performance" style="padding:30px 40px; page-break-after:always;">
+        <div style="border-bottom:3px solid #c9a84c; margin-bottom:20px; padding-bottom:8px;">
+          <h2 style="color:#0d1f3c; font-size:18px;">📈 Performance Tracking and Feedback Log</h2>
+        </div>
+        <div style="background:#f8f6f0; padding:16px; border-radius:8px; margin-bottom:20px; display:flex; gap:30px; flex-wrap:wrap;">
+          <div><div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:4px;">Performance Score</div>
+            <div style="font-size:28px; font-weight:bold; color:#c9a84c;">${data.performance.score}<span style="font-size:14px; color:#888;">/10</span></div>
+          </div>
+          ${data.performance.date ? `<div><div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:4px;">Assessment Date</div><div style="font-weight:600;">${data.performance.date}</div></div>` : ''}
+          ${data.performance.notes ? `<div style="flex:1;"><div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:4px;">Notes</div><div style="font-size:11px;">${data.performance.notes}</div></div>` : ''}
+        </div>
+        ${data.feedbackLog.length ? `
+        <div style="font-size:13px; font-weight:700; color:#0d1f3c; margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;">Feedback &amp; Achievement Log</div>
+        ${data.feedbackLog.map(entry => `
+        <div style="border:1px solid #ddd; border-radius:6px; padding:12px; margin-bottom:10px; background:#f8f6f0;">
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+            <span style="font-size:10px; color:#c9a84c; font-weight:600;">${entry.date || ''}</span>
+            <span style="font-size:10px; background:#e0e0e0; padding:2px 8px; border-radius:10px;">${typeLabel[entry.type] || entry.type}</span>
+          </div>
+          ${entry.source ? `<div style="color:#555; font-size:11px; margin-bottom:4px;">📌 ${entry.source}</div>` : ''}
+          <div style="font-size:11px; margin-bottom:4px;">${entry.details}</div>
+          ${entry.action ? `<div style="color:#c9a84c; font-size:11px;">→ ${entry.action}</div>` : ''}
+        </div>`).join('')}` : '<p style="color:#888; font-style:italic;">No feedback entries yet.</p>'}
+      </div>
+
+      <!-- Network & Skills -->
+      <div id="pdf-sec-skills" style="padding:30px 40px; page-break-after:always;">
+        <div style="border-bottom:3px solid #c9a84c; margin-bottom:20px; padding-bottom:8px;">
+          <h2 style="color:#0d1f3c; font-size:18px;">🎓 Academy Network &amp; Skills</h2>
+        </div>
+        ${data.network.length ? `
+        <div style="margin-bottom:24px;">
+          <div style="font-size:13px; font-weight:700; color:#0d1f3c; margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;">Network Connections</div>
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr style="background:#0d1f3c; color:#c9a84c;">
+              <th style="padding:9px 12px; text-align:left; font-size:10px; text-transform:uppercase;">Name</th>
+              <th style="padding:9px 12px; text-align:left; font-size:10px; text-transform:uppercase;">Role</th>
+              <th style="padding:9px 12px; text-align:left; font-size:10px; text-transform:uppercase;">Organisation</th>
+            </tr></thead>
+            <tbody>${data.network.map((m,i) => `
+              <tr style="background:${i%2===0?'#fff':'#f8f6f0'};">
+                <td style="padding:8px 12px; border-bottom:1px solid #eee; font-weight:600;">${m.name}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #eee;">${m.role}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #eee;">${m.org}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : ''}
+        <div style="margin-top:10px;">
+          <div style="font-size:13px; font-weight:700; color:#0d1f3c; margin-bottom:14px; text-transform:uppercase; letter-spacing:1px;">Skills Self-Assessment</div>
+          ${SKILL_CATS.map(cat => `
+          <div style="margin-bottom:18px;">
+            <div style="background:${cat.bg}; color:#fff; padding:8px 14px; border-radius:6px 6px 0 0; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;">${cat.label}</div>
+            <table style="width:100%; border-collapse:collapse; border:1px solid #eee; border-top:none;">
+              <thead><tr style="background:#f0f0f0;">
+                <th style="padding:6px 10px; text-align:left; font-size:10px; text-transform:uppercase; width:50%;">Skill</th>
+                <th style="padding:6px 10px; text-align:center; font-size:10px; text-transform:uppercase;">Starting</th>
+                <th style="padding:6px 10px; text-align:center; font-size:10px; text-transform:uppercase;">Target</th>
+                <th style="padding:6px 10px; text-align:center; font-size:10px; text-transform:uppercase;">Actual</th>
+              </tr></thead>
+              <tbody>${cat.skills.map((skill,i) => {
+                const r = (data.skillRatings2||{})[skill] || {today:0,target:0,actual:0};
+                const circles = (n,color) => Array.from({length:5},(_,i)=>
+                  `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 1px;background:${i<n?color:'transparent'};border:1.5px solid ${color};"></span>`).join('');
+                return `<tr style="background:${i%2===0?'#fff':'#f8f6f0'};">
+                  <td style="padding:6px 10px; font-size:11px; border-bottom:1px solid #eee;">${skill}</td>
+                  <td style="padding:6px 10px; text-align:center; border-bottom:1px solid #eee;">${circles(r.today,'#0097a7')}</td>
+                  <td style="padding:6px 10px; text-align:center; border-bottom:1px solid #eee;">${circles(r.target,'#e91e63')}</td>
+                  <td style="padding:6px 10px; text-align:center; border-bottom:1px solid #eee;">${circles(r.actual||0,'#39c400')}</td>
+                </tr>`;
+              }).join('')}</tbody>
+            </table>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Activity Calendar -->
+      ${Object.keys(data.calendar || {}).length ? (() => {
+        // Group entries by year-month, sorted
+        const byMonth = {};
+        Object.entries(data.calendar).sort(([a],[b]) => a.localeCompare(b)).forEach(([dateStr, acts]) => {
+          const [yr, mo] = dateStr.split('-');
+          const key = `${yr}-${mo}`;
+          if (!byMonth[key]) byMonth[key] = [];
+          acts.forEach(a => byMonth[key].push({ dateStr, ...a }));
+        });
+        const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        return `
+        <div id="pdf-sec-calendar" style="padding:30px 40px; page-break-after:always;">
+          </div>
+          <div style="display:flex; gap:12px; margin-bottom:18px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px;">
+              <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#e0f7fa; border:1px solid #0097a7;"></span> Planned
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px;">
+              <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#fce4ec; border:1px solid #e91e63;"></span> Actual
+            </div>
+          </div>
+          ${Object.entries(byMonth).map(([key, entries]) => {
+            const [yr, mo] = key.split('-');
+            const label = `${monthNames[parseInt(mo)-1]} ${yr}`;
+            return `
+            <div style="margin-bottom:22px;">
+              <div style="font-size:11px; font-weight:700; color:#c9a84c; text-transform:uppercase; letter-spacing:2px; margin-bottom:10px; border-left:3px solid #c9a84c; padding-left:10px;">${label}</div>
+              <table style="width:100%; border-collapse:collapse;">
+                <thead><tr style="background:#0d1f3c; color:#c9a84c;">
+                  <th style="padding:7px 12px; text-align:left; font-size:10px; text-transform:uppercase; width:120px;">Date</th>
+                  <th style="padding:7px 12px; text-align:left; font-size:10px; text-transform:uppercase;">Activity</th>
+                  <th style="padding:7px 12px; text-align:left; font-size:10px; text-transform:uppercase; width:80px;">Tag</th>
+                </tr></thead>
+                <tbody>${entries.map((e, i) => {
+                  const d = new Date(e.dateStr + 'T00:00:00');
+                  const dayLabel = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+                  const tagBg    = e.type === 'planned' ? '#e0f7fa' : '#fce4ec';
+                  const tagColor = e.type === 'planned' ? '#0097a7' : '#e91e63';
+                  const tagText  = e.type === 'planned' ? 'Planned' : 'Actual';
+                  return `<tr style="background:${i%2===0?'#fff':'#f8f6f0'};">
+                    <td style="padding:7px 12px; border-bottom:1px solid #eee; font-size:11px; color:#555;">${dayLabel}</td>
+                    <td style="padding:7px 12px; border-bottom:1px solid #eee; font-size:12px;">${e.title}</td>
+                    <td style="padding:7px 12px; border-bottom:1px solid #eee;">
+                      <span style="background:${tagBg}; color:${tagColor}; border:1px solid ${tagColor}; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600;">${tagText}</span>
+                    </td>
+                  </tr>`;
+                }).join('')}</tbody>
+              </table>
+            </div>`;
+          }).join('')}
+        </div>`;
+      })() : ''}
+
+      <!-- Reflection -->
+      ${data.reflection ? `
+      <div id="pdf-sec-reflection" style="padding:30px 40px;">
+        <div style="border-bottom:3px solid #c9a84c; margin-bottom:20px; padding-bottom:8px;">
+          <h2 style="color:#0d1f3c; font-size:18px;">✍️ Reflection</h2>
+        </div>
+        <div style="background:#f8f6f0; border-left:4px solid #c9a84c; padding:18px; border-radius:4px; font-style:italic; line-height:1.8; white-space:pre-wrap;">${data.reflection}</div>
+      </div>` : ''}
+
+    </div>`;
+
+    const name = data.about.name ? data.about.name.replace(/\s+/g,'-') : 'passport';
+    const container = document.createElement('div');
+    container.innerHTML = html;
+
+    // Remove sections the user deselected (hiding leaves ghost page-breaks)
+    ['about','stakeholder','mentor','table5','ai','performance','skills','calendar','reflection'].forEach(key => {
+        if (!sel[key]) {
+            const el = container.querySelector('#pdf-sec-' + key);
+            if (el) el.remove();
+        }
+    });
+
+    document.body.appendChild(container);
+
+    html2pdf().set({
+        margin:        [10, 10, 10, 10],
+        filename:      `self-development-passport-${name}.pdf`,
+        image:         { type: 'jpeg', quality: 0.98 },
+        html2canvas:   { scale: 2, useCORS: true, logging: false },
+        jsPDF:         { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:     { mode: ['css','legacy'] }
+    }).from(container).save().then(() => {
+        document.body.removeChild(container);
+        showNotification('📄 PDF saved!');
+    });
+}
+
+function importJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            const imported = JSON.parse(e.target.result);
+            data = { ...data, ...imported };
+            while (data.ai.length < 3) data.ai.push({ title:'', problem:'', approach:'', outcome:'' });
+            saveData();
+            renderAll();
+            showNotification('📤 Passport imported successfully!');
+        } catch(err) {
+            alert('Invalid JSON file. Please use a file exported from this passport.');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+function exportJSON() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href:url, download:'self-development-passport.json' });
+    a.click(); URL.revokeObjectURL(url);
+    showNotification('📥 Exported!');
+}
+
+// ── Render all ────────────────────────────────────────────────────────────────
+function renderAll() {
+    renderNetwork();
+    renderSkills();
+    renderSkillCategories();
+    renderTable5();
+    renderLearnings();
+    renderAbout();
+    renderStakeholders();
+    renderEngagement();
+    renderPDP();
+    renderActivities();
+    renderMentors();
+    renderAI();
+    renderPerformance();
+    initCal();
+    renderCalendar();
+    updateNavChecks();
+    updateDashboardProgress();
+    renderDashboardStats();
+    // default log date to today
+    const logDate = document.getElementById('log-date');
+    if (logDate && !logDate.value) logDate.value = new Date().toISOString().split('T')[0];
+}
+
+// ── Confirm Modal ─────────────────────────────────────────────────────────────
+let _confirmCallback = null;
+
+function confirmDelete(message, callback) {
+    document.getElementById('confirm-message').textContent = message;
+    _confirmCallback = callback;
+    const overlay = document.getElementById('confirm-overlay');
+    overlay.style.display = 'flex';
+}
+
+function confirmOK() {
+    const cb = _confirmCallback;
+    closeConfirm();
+    if (cb) cb();
+}
+
+function closeConfirm() {
+    document.getElementById('confirm-overlay').style.display = 'none';
+    _confirmCallback = null;
+}
+
+// close on backdrop click
+document.getElementById('confirm-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirm();
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function val(id)      { return (document.getElementById(id)?.value || '').trim(); }
+function clear(...ids){ ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); }
+function escHtml(s)   { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s)   { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ── Keyboard shortcuts ───────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        const active = document.querySelector('.page.active')?.id?.replace('page-','');
+        if (active && active !== 'dashboard' && active !== 'end') saveSection(active);
+        else if (active === 'dashboard') saveSection('dashboard');
+    }
+});
+
+// ── Calendar ──────────────────────────────────────────────────────────────────
+let calYear, calMonth, calSelectedDate;
+
+const CAL_MONTHS = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+
+function initCal() {
+    if (calYear !== undefined) return; // already initialised
+    const now = new Date();
+    calYear  = now.getFullYear();
+    calMonth = now.getMonth();
+}
+
+function calNav(dir) {
+    calMonth += dir;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    if (calMonth <  0) { calMonth = 11; calYear--; }
+    renderCalendar();
+}
+
+function renderCalendar() {
+    const label = document.getElementById('cal-month-label');
+    const grid  = document.getElementById('cal-grid');
+    if (!label || !grid) return;
+
+    label.textContent = `${CAL_MONTHS[calMonth]} ${calYear}`;
+    grid.innerHTML = '';
+
+    // Day-of-week headers (Mon–Fri only)
+    ['Mon','Tue','Wed','Thu','Fri'].forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'cal-dow';
+        el.textContent = d;
+        grid.appendChild(el);
+    });
+
+    const today       = new Date();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+    // Build list of all weekdays (Mon–Fri) for this month,
+    // padded with prev/next month days to fill complete weeks
+    const cells = [];
+    // Find the Monday on or before the 1st of the month
+    const firstOfMonth = new Date(calYear, calMonth, 1);
+    const firstDow = firstOfMonth.getDay(); // 0=Sun … 6=Sat
+    // Days to back-fill so row starts on Monday (convert Sun=0 → 6, Mon=1 → 0, etc.)
+    const backFill = (firstDow === 0) ? 6 : firstDow - 1;
+    const startDate = new Date(calYear, calMonth, 1 - backFill);
+
+    // Generate enough days to cover the full month in Mon–Fri rows
+    const lastOfMonth = new Date(calYear, calMonth, daysInMonth);
+    const lastDow = lastOfMonth.getDay();
+    const forwardFill = (lastDow === 0) ? 0 : (lastDow === 6) ? 0 : 5 - lastDow;
+    const endDate = new Date(calYear, calMonth, daysInMonth + forwardFill);
+
+    const cur = new Date(startDate);
+    while (cur <= endDate) {
+        const dow = cur.getDay();
+        if (dow !== 0 && dow !== 6) { // skip Sat & Sun
+            cells.push({
+                day: cur.getDate(),
+                mo: cur.getMonth(),
+                yr: cur.getFullYear(),
+                other: cur.getMonth() !== calMonth
+            });
+        }
+        cur.setDate(cur.getDate() + 1);
+    }
+
+    cells.forEach(cell => {
+        const date    = new Date(cell.yr, cell.mo, cell.day);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        const isToday = date.getFullYear() === today.getFullYear()
+                     && date.getMonth()    === today.getMonth()
+                     && date.getDate()     === today.getDate();
+
+        const activities = (data.calendar || {})[dateStr] || [];
+
+        const div = document.createElement('div');
+        div.className = 'cal-day' + (cell.other ? ' other-month' : '') + (isToday ? ' today' : '');
+        if (!cell.other) div.onclick = () => openCalModal(dateStr, date);
+
+        div.innerHTML = `<div class="cal-day-num">${cell.day}</div>` +
+            activities.map(a =>
+                `<div class="cal-activity ${a.type}" title="${escHtml(a.title)}">${escHtml(a.title)}</div>`
+            ).join('');
+
+        grid.appendChild(div);
+    });
+}
+
+function openCalModal(dateStr, dateObj) {
+    calSelectedDate = dateStr;
+    const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+    document.getElementById('cal-modal-date').textContent = dateObj.toLocaleDateString('en-GB', opts);
+    document.getElementById('cal-new-title').value = '';
+    renderCalModalEntries();
+    document.getElementById('cal-modal').classList.add('open');
+    setTimeout(() => document.getElementById('cal-new-title').focus(), 80);
+}
+
+function renderCalModalEntries() {
+    const el = document.getElementById('cal-modal-entries');
+    if (!el) return;
+    const acts = (data.calendar || {})[calSelectedDate] || [];
+    if (!acts.length) {
+        el.innerHTML = '<p style="color:var(--muted); font-size:0.82rem; text-align:center; padding:8px 0;">No activities yet — add one below.</p>';
+        return;
+    }
+    el.innerHTML = acts.map((a, i) => `
+        <div class="cal-entry">
+            <span class="cal-entry-tag ${a.type}">${a.type === 'planned' ? 'Planned' : 'Actual'}</span>
+            <span class="cal-entry-title">${escHtml(a.title)}</span>
+            <button class="cal-entry-remove" onclick="removeCalActivity(${i})">✕</button>
+        </div>`).join('');
+}
+
+function addCalActivity() {
+    const title = val('cal-new-title');
+    if (!title) return;
+    const type = document.getElementById('cal-new-type').value;
+    if (!data.calendar) data.calendar = {};
+    if (!data.calendar[calSelectedDate]) data.calendar[calSelectedDate] = [];
+    data.calendar[calSelectedDate].push({ id: Date.now(), title, type });
+    document.getElementById('cal-new-title').value = '';
+    renderCalModalEntries();
+    renderCalendar();
+    saveData();
+}
+
+function removeCalActivity(idx) {
+    if (!data.calendar?.[calSelectedDate]) return;
+    data.calendar[calSelectedDate].splice(idx, 1);
+    if (!data.calendar[calSelectedDate].length) delete data.calendar[calSelectedDate];
+    renderCalModalEntries();
+    renderCalendar();
+    saveData();
+}
+
+function closeCalModal() {
+    document.getElementById('cal-modal').classList.remove('open');
+}
+
+document.getElementById('cal-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeCalModal();
+});
+
+document.getElementById('cal-new-title').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addCalActivity();
+});
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
