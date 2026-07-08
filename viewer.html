@@ -304,8 +304,8 @@
 </main>
 
 <script>
-// Bypass GitHub Pages cache by fetching raw from GitHub with a timestamp
-const RAW_URL = 'https://raw.githubusercontent.com/sapapcn/self-development-passport/main/data.json';
+// Fetch data.json relative to this page with cache-busting
+const RAW_URL = './data.json';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 let passport = null;
 let calYear, calMonth, feedFilter = 'all';
