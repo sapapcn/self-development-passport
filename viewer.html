@@ -306,13 +306,25 @@
 <script>
 // Fetch data.json relative to this page with cache-busting
 const RAW_URL = './data.json';
+const GH_API  = 'https://api.github.com/repos/sapapcn/self-development-passport/contents/data.json';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 let passport = null;
 let calYear, calMonth, feedFilter = 'all';
 
 async function loadPassport() {
   try {
-    const res = await fetch(RAW_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    // Get the current SHA of data.json from GitHub API (never cached)
+    // then fetch the raw file with that SHA as cache-buster
+    let url = RAW_URL + '?t=' + Date.now();
+    try {
+      const meta = await fetch(GH_API, { cache: 'no-store' });
+      if (meta.ok) {
+        const j = await meta.json();
+        // Use the blob SHA as a cache-busting key — changes on every push
+        url = RAW_URL + '?sha=' + j.sha;
+      }
+    } catch(e) { /* fall through to plain fetch */ }
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error('Not found');
     passport = await res.json();
     const d = new Date();
