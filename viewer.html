@@ -14,20 +14,17 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
-  /* Animated background grid */
   body::before {
     content: ''; position: fixed; inset: 0; z-index: 0;
     background-image: linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
                       linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
     background-size: 40px 40px;
-    animation: gridScroll 20s linear infinite;
-    pointer-events: none;
+    animation: gridScroll 20s linear infinite; pointer-events: none;
   }
   @keyframes gridScroll { from { background-position: 0 0; } to { background-position: 40px 40px; } }
 
-  /* Glowing orbs */
   .orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.12; pointer-events: none; z-index: 0; animation: orbFloat 8s ease-in-out infinite; }
-  .orb1 { width: 400px; height: 400px; background: var(--cyan); top: -100px; left: -100px; animation-delay: 0s; }
+  .orb1 { width: 400px; height: 400px; background: var(--cyan); top: -100px; left: -100px; }
   .orb2 { width: 300px; height: 300px; background: var(--magenta); bottom: -80px; right: -80px; animation-delay: 3s; }
   .orb3 { width: 200px; height: 200px; background: var(--gold); top: 50%; left: 50%; animation-delay: 5s; }
   @keyframes orbFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
@@ -38,7 +35,6 @@
     padding: 16px 32px; display: flex; align-items: center; gap: 16px;
     backdrop-filter: blur(20px);
   }
-  .header-left { display: flex; flex-direction: column; }
   header h1 {
     font-family: 'Orbitron', monospace; font-size: 1.05rem; letter-spacing: 3px;
     background: linear-gradient(90deg, var(--cyan), var(--magenta));
@@ -50,10 +46,10 @@
   .sync-badge {
     margin-left: auto; font-size: 0.62rem; font-family: 'Orbitron', monospace;
     letter-spacing: 2px; color: var(--muted); background: rgba(0,245,255,0.06);
-    border: 1px solid var(--border); padding: 4px 12px; border-radius: 3px;
+    border: 1px solid var(--border); padding: 4px 12px; border-radius: 3px; white-space: nowrap;
   }
   .pulse-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--cyan); margin-right: 6px; animation: pulse 2s ease-in-out infinite; }
+    background: var(--cyan); margin-right: 6px; animation: pulse 2s ease-in-out infinite; vertical-align: middle; }
   @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
 
   nav {
@@ -67,10 +63,7 @@
     padding: 8px 18px; border-radius: 3px; cursor: pointer;
     transition: all 0.25s; text-transform: uppercase; position: relative; overflow: hidden;
   }
-  nav button::after {
-    content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,245,255,0.1), transparent);
-    opacity: 0; transition: opacity 0.25s;
-  }
+  nav button::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,245,255,0.1), transparent); opacity: 0; transition: opacity 0.25s; }
   nav button:hover::after, nav button.active::after { opacity: 1; }
   nav button:hover, nav button.active { border-color: var(--cyan); color: var(--cyan); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,245,255,0.15); }
 
@@ -89,20 +82,47 @@
   .section-title::before { content: '▸'; color: var(--magenta); animation: blink 1.5s ease-in-out infinite; }
   @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
 
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 20px 24px; margin-bottom: 16px;
-    transition: border-color 0.25s, box-shadow 0.25s;
-  }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; transition: border-color 0.25s, box-shadow 0.25s; }
   .card:hover { border-color: rgba(0,245,255,0.25); box-shadow: 0 4px 24px rgba(0,245,255,0.08); }
 
-  /* Calendar */
-  .cal-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-  .cal-nav button {
-    background: none; border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Orbitron', monospace; font-size: 0.62rem; padding: 7px 16px;
-    border-radius: 3px; cursor: pointer; letter-spacing: 2px; transition: all 0.2s;
+  /* Dashboard */
+  .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .dash-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 22px 20px; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden;
   }
+  .dash-card::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s; background: linear-gradient(135deg, rgba(0,245,255,0.06), transparent); }
+  .dash-card:hover::before { opacity: 1; }
+  .dash-card:hover { border-color: rgba(0,245,255,0.35); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,245,255,0.1); }
+  .dash-icon { font-size: 1.8rem; margin-bottom: 12px; }
+  .dash-num { font-family: 'Orbitron', monospace; font-size: 2.2rem; color: var(--cyan); line-height: 1; margin-bottom: 4px; }
+  .dash-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .dash-card.gold .dash-num { color: var(--gold); }
+  .dash-card.gold:hover { border-color: rgba(201,168,76,0.35); box-shadow: 0 8px 32px rgba(201,168,76,0.1); }
+  .dash-card.magenta .dash-num { color: var(--magenta); }
+  .dash-card.magenta:hover { border-color: rgba(255,0,255,0.35); box-shadow: 0 8px 32px rgba(255,0,255,0.1); }
+
+  .dash-recent { margin-top: 8px; }
+  .dash-recent-title { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 3px; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; }
+  .recent-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 12px; transition: all 0.2s; }
+  .recent-item:hover { border-color: rgba(0,245,255,0.2); transform: translateX(3px); }
+  .recent-date { font-family: 'Orbitron', monospace; font-size: 0.58rem; color: var(--cyan); letter-spacing: 1px; white-space: nowrap; margin-top: 2px; }
+  .recent-text { font-size: 0.83rem; line-height: 1.5; color: var(--text); }
+
+  /* Search */
+  .search-wrap { position: relative; margin-bottom: 20px; }
+  .search-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    padding: 10px 16px 10px 40px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.88rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: rgba(0,245,255,0.4); box-shadow: 0 0 0 3px rgba(0,245,255,0.06); }
+  .search-input::placeholder { color: var(--muted); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+
+  /* Calendar */
+  .cal-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .cal-nav button { background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Orbitron', monospace; font-size: 0.62rem; padding: 7px 16px; border-radius: 3px; cursor: pointer; letter-spacing: 2px; transition: all 0.2s; }
   .cal-nav button:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 12px rgba(0,245,255,0.15); }
   .cal-nav h2 { font-family: 'Orbitron', monospace; font-size: 0.88rem; letter-spacing: 3px; color: var(--text); }
   .cal-legend { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -113,10 +133,8 @@
   .cal-header-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 4px; }
   .cal-dow { text-align: center; font-family: 'Orbitron', monospace; font-size: 0.52rem; letter-spacing: 2px; color: var(--muted); padding: 6px 0; }
   .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
-  .cal-cell {
-    min-height: 72px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 4px; padding: 5px; position: relative; transition: all 0.2s;
-  }
+  .cal-cell { min-height: 72px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 5px; position: relative; transition: all 0.2s; cursor: default; }
+  .cal-cell.has-activity { cursor: pointer; }
   .cal-cell:hover { background: rgba(255,255,255,0.05); border-color: rgba(0,245,255,0.2); }
   .cal-cell.today { border-color: rgba(0,245,255,0.5); background: rgba(0,245,255,0.04); box-shadow: 0 0 12px rgba(0,245,255,0.1) inset; }
   .cal-cell.other-month { opacity: 0.25; }
@@ -127,90 +145,70 @@
   .cal-act.planned { background: rgba(0,245,255,0.12); border: 1px solid rgba(0,245,255,0.3); color: var(--cyan); }
   .cal-act.actual  { background: rgba(255,0,255,0.12); border: 1px solid rgba(255,0,255,0.3); color: var(--magenta); }
 
-  /* Performance */
-  .perf-score-ring { display: flex; align-items: center; gap: 28px; margin-bottom: 20px; }
-  .score-circle {
-    width: 90px; height: 90px; border-radius: 50%; flex-shrink: 0;
-    border: 3px solid var(--cyan); display: flex; align-items: center; justify-content: center;
-    font-family: 'Orbitron', monospace; font-size: 2rem; color: var(--cyan);
-    box-shadow: 0 0 30px rgba(0,245,255,0.25), 0 0 60px rgba(0,245,255,0.1);
-    animation: scoreGlow 3s ease-in-out infinite;
-  }
-  @keyframes scoreGlow { 0%,100% { box-shadow: 0 0 20px rgba(0,245,255,0.2), 0 0 40px rgba(0,245,255,0.08); } 50% { box-shadow: 0 0 40px rgba(0,245,255,0.4), 0 0 80px rgba(0,245,255,0.15); } }
-  .score-label { font-family: 'Orbitron', monospace; font-size: 0.62rem; letter-spacing: 3px; color: var(--muted); margin-bottom: 6px; }
-  .score-notes { font-size: 0.88rem; line-height: 1.7; color: var(--text); }
+  /* Day popover */
+  .popover { display: none; position: fixed; z-index: 500; background: rgba(6,6,22,0.98); border: 1px solid rgba(0,245,255,0.3); border-radius: 8px; padding: 18px 20px; min-width: 220px; max-width: 300px; box-shadow: 0 8px 40px rgba(0,0,0,0.6); animation: fadeUp 0.2s ease; }
+  .popover.open { display: block; }
+  .popover-date { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 2px; color: var(--cyan); margin-bottom: 12px; }
+  .popover-close { position: absolute; top: 10px; right: 12px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
+  .popover-act { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.82rem; display: flex; align-items: center; gap: 8px; }
+  .popover-act:last-child { border-bottom: none; }
+  .popover-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .popover-dot.planned { background: var(--cyan); }
+  .popover-dot.actual  { background: var(--magenta); }
 
   /* Feedback */
-  .log-entry {
-    background: var(--surface); border: 1px solid var(--border);
-    border-left: 3px solid var(--cyan); border-radius: 0 8px 8px 0;
-    padding: 16px 20px; margin-bottom: 14px;
-    transition: all 0.25s; animation: fadeUp 0.4s ease both;
-  }
+  .log-entry { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--cyan); border-radius: 0 8px 8px 0; margin-bottom: 14px; transition: all 0.25s; animation: fadeUp 0.4s ease both; overflow: hidden; }
   .log-entry:hover { transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,245,255,0.08); }
   .log-entry.achievement { border-left-color: var(--gold); }
   .log-entry.achievement:hover { box-shadow: 0 4px 20px rgba(201,168,76,0.1); }
   .log-entry.goal { border-left-color: var(--magenta); }
   .log-entry.goal:hover { box-shadow: 0 4px 20px rgba(255,0,255,0.08); }
-  .log-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .log-header { padding: 14px 20px 10px; cursor: pointer; user-select: none; }
+  .log-body { padding: 0 20px 14px; border-top: 1px solid rgba(255,255,255,0.05); display: none; }
+  .log-body.open { display: block; animation: fadeUp 0.2s ease; }
+  .log-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
   .log-date { font-family: 'Orbitron', monospace; font-size: 0.62rem; letter-spacing: 2px; color: var(--cyan); }
   .log-type { font-size: 0.62rem; padding: 2px 9px; border-radius: 2px; }
   .type-feedback    { background: rgba(0,245,255,0.1); color: var(--cyan); border: 1px solid rgba(0,245,255,0.3); }
   .type-achievement { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.35); }
   .type-goal        { background: rgba(255,0,255,0.1); color: var(--magenta); border: 1px solid rgba(255,0,255,0.3); }
-  .log-source { color: var(--muted); font-size: 0.8rem; margin-bottom: 6px; }
+  .log-preview { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
+  .log-chevron { margin-left: auto; color: var(--muted); font-size: 0.7rem; transition: transform 0.2s; flex-shrink: 0; }
+  .log-chevron.open { transform: rotate(180deg); }
+  .log-source { color: var(--muted); font-size: 0.8rem; margin-bottom: 8px; margin-top: 10px; }
   .log-details { font-size: 0.88rem; line-height: 1.6; margin-bottom: 4px; }
   .log-action { color: var(--gold); font-size: 0.82rem; margin-top: 6px; }
 
   /* Reflections */
-  .refl-entry {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 20px 24px; margin-bottom: 16px;
-    position: relative; overflow: hidden; transition: all 0.25s;
-    animation: fadeUp 0.4s ease both;
-  }
-  .refl-entry::before {
-    content: '"'; position: absolute; top: -10px; left: 16px;
-    font-size: 5rem; color: rgba(0,245,255,0.06); font-family: Georgia, serif; line-height: 1;
-    pointer-events: none;
-  }
+  .refl-entry { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; position: relative; overflow: hidden; transition: all 0.25s; animation: fadeUp 0.4s ease both; }
   .refl-entry:hover { border-color: rgba(0,245,255,0.25); box-shadow: 0 4px 24px rgba(0,245,255,0.08); }
-  .refl-date { font-family: 'Orbitron', monospace; font-size: 0.62rem; letter-spacing: 2px; color: var(--cyan); margin-bottom: 12px; }
-  .refl-text { font-size: 0.9rem; line-height: 1.85; white-space: pre-wrap; position: relative; z-index: 1; }
+  .refl-header { padding: 18px 20px 12px; cursor: pointer; user-select: none; display: flex; align-items: center; gap: 12px; }
+  .refl-header::before { content: '"'; font-size: 2.5rem; color: rgba(0,245,255,0.12); font-family: Georgia, serif; line-height: 1; flex-shrink: 0; }
+  .refl-header-inner { flex: 1; min-width: 0; }
+  .refl-date { font-family: 'Orbitron', monospace; font-size: 0.62rem; letter-spacing: 2px; color: var(--cyan); margin-bottom: 6px; }
+  .refl-preview { font-size: 0.83rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .refl-chevron { color: var(--muted); font-size: 0.7rem; transition: transform 0.2s; flex-shrink: 0; }
+  .refl-chevron.open { transform: rotate(180deg); }
+  .refl-body { display: none; padding: 0 20px 18px 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+  .refl-body.open { display: block; animation: fadeUp 0.2s ease; }
+  .refl-text { font-size: 0.9rem; line-height: 1.85; white-space: pre-wrap; padding-top: 14px; }
 
-  /* Filter bar */
-  .filter-bar { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
-  .filter-btn {
-    background: none; border: 1px solid var(--border); color: var(--muted);
-    font-size: 0.7rem; padding: 6px 16px; border-radius: 3px; cursor: pointer; transition: all 0.2s;
-  }
+  /* Filter / search */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 0.7rem; padding: 6px 16px; border-radius: 3px; cursor: pointer; transition: all 0.2s; }
   .filter-btn:hover, .filter-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.06); }
 
   /* Stats bar */
-  .stats-bar { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
-  .stat-pill {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
-    padding: 10px 18px; display: flex; flex-direction: column; align-items: center; min-width: 90px;
-    transition: all 0.25s;
-  }
+  .stats-bar { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat-pill { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px 18px; display: flex; flex-direction: column; align-items: center; min-width: 86px; transition: all 0.25s; }
   .stat-pill:hover { border-color: rgba(0,245,255,0.3); box-shadow: 0 0 16px rgba(0,245,255,0.1); }
-  .stat-num { font-family: 'Orbitron', monospace; font-size: 1.4rem; color: var(--cyan); animation: countUp 1s ease; }
-  @keyframes countUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  .stat-lbl { font-size: 0.6rem; color: var(--muted); letter-spacing: 1px; margin-top: 2px; text-transform: uppercase; }
+  .stat-num { font-family: 'Orbitron', monospace; font-size: 1.4rem; color: var(--cyan); }
+  .stat-lbl { font-size: 0.58rem; color: var(--muted); letter-spacing: 1px; margin-top: 2px; text-transform: uppercase; }
 
-  /* Empty state */
   .empty { color: var(--muted); font-size: 0.88rem; font-style: italic; padding: 32px 0; text-align: center; }
 
-  /* Loading */
-  #loading {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 60vh; gap: 20px; position: relative; z-index: 1;
-  }
-  .loader-ring {
-    width: 60px; height: 60px; border-radius: 50%;
-    border: 2px solid rgba(0,245,255,0.1); border-top-color: var(--cyan);
-    animation: spin 1s linear infinite;
-  }
+  #loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 20px; position: relative; z-index: 1; }
+  .loader-ring { width: 60px; height: 60px; border-radius: 50%; border: 2px solid rgba(0,245,255,0.1); border-top-color: var(--cyan); animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loader-text { font-family: 'Orbitron', monospace; font-size: 0.65rem; letter-spacing: 4px; color: var(--muted); }
 </style>
@@ -222,7 +220,7 @@
 <div class="orb orb3"></div>
 
 <header>
-  <div class="header-left">
+  <div>
     <h1>Phoebe Ngitngit</h1>
     <div class="sub">Self-Development Passport · Live View</div>
   </div>
@@ -230,22 +228,28 @@
 </header>
 
 <nav>
-  <button class="active" onclick="showTab('calendar', this)">📅 Calendar</button>
-  <button onclick="showTab('performance', this)">📈 Performance</button>
+  <button class="active" onclick="showTab('dashboard', this)">🏠 Dashboard</button>
+  <button onclick="showTab('calendar', this)">📅 Calendar</button>
   <button onclick="showTab('feedback', this)">📝 Feedback</button>
   <button onclick="showTab('reflections', this)">✍️ Reflections</button>
 </nav>
 
 <main>
-  <div id="loading">
-    <div class="loader-ring"></div>
-    <div class="loader-text">LOADING DATA…</div>
-  </div>
-
+  <div id="loading"><div class="loader-ring"></div><div class="loader-text">LOADING DATA…</div></div>
   <div id="content" style="display:none;">
 
+    <!-- DASHBOARD -->
+    <div class="section active" id="tab-dashboard">
+      <div class="section-title">Overview</div>
+      <div class="dash-grid" id="dash-grid"></div>
+      <div class="dash-recent">
+        <div class="dash-recent-title">Recent Activity</div>
+        <div id="dash-recent-list"></div>
+      </div>
+    </div>
+
     <!-- CALENDAR -->
-    <div class="section active" id="tab-calendar">
+    <div class="section" id="tab-calendar">
       <div class="section-title">Activity Calendar</div>
       <div class="stats-bar" id="cal-stats"></div>
       <div class="cal-nav">
@@ -265,25 +269,14 @@
       <div class="cal-grid" id="cal-grid"></div>
     </div>
 
-    <!-- PERFORMANCE -->
-    <div class="section" id="tab-performance">
-      <div class="section-title">Performance</div>
-      <div class="card">
-        <div class="perf-score-ring">
-          <div class="score-circle" id="perf-score-val">—</div>
-          <div>
-            <div class="score-label">Performance Score / 10</div>
-            <div id="perf-date" style="font-size:0.78rem; color:var(--muted); margin-top:4px;"></div>
-          </div>
-        </div>
-        <div class="score-notes" id="perf-notes"></div>
-      </div>
-    </div>
-
     <!-- FEEDBACK -->
     <div class="section" id="tab-feedback">
       <div class="section-title">Feedback & Achievements</div>
       <div class="stats-bar" id="feedback-stats"></div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="feedback-search" placeholder="Search feedback…" oninput="renderFeedback()">
+      </div>
       <div class="filter-bar">
         <button class="filter-btn active" onclick="filterFeedback('all', this)">All</button>
         <button class="filter-btn" onclick="filterFeedback('feedback', this)">Feedback</button>
@@ -297,51 +290,50 @@
     <div class="section" id="tab-reflections">
       <div class="section-title">Reflection Log</div>
       <div class="stats-bar" id="refl-stats"></div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="refl-search" placeholder="Search reflections…" oninput="renderReflections()">
+      </div>
       <div id="reflections-list"></div>
     </div>
 
   </div>
 </main>
 
+<!-- Day popover -->
+<div class="popover" id="day-popover">
+  <button class="popover-close" onclick="closePopover()">✕</button>
+  <div class="popover-date" id="popover-date"></div>
+  <div id="popover-acts"></div>
+</div>
+
 <script>
-// Fetch data.json relative to this page with cache-busting
 const RAW_URL = './data.json';
 const GH_API  = 'https://api.github.com/repos/sapapcn/self-development-passport/contents/data.json';
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 let passport = null;
 let calYear, calMonth, feedFilter = 'all';
 
 async function loadPassport() {
   try {
-    // Get the current SHA of data.json from GitHub API (never cached)
-    // then fetch the raw file with that SHA as cache-buster
     let url = RAW_URL + '?t=' + Date.now();
     try {
       const meta = await fetch(GH_API, { cache: 'no-store' });
-      if (meta.ok) {
-        const j = await meta.json();
-        // Use the blob SHA as a cache-busting key — changes on every push
-        url = RAW_URL + '?sha=' + j.sha;
-      }
-    } catch(e) { /* fall through to plain fetch */ }
+      if (meta.ok) { const j = await meta.json(); url = RAW_URL + '?sha=' + j.sha; }
+    } catch(e) {}
     const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Not found');
+    if (!res.ok) throw new Error();
     passport = await res.json();
-    const d = new Date();
-    calYear = d.getFullYear(); calMonth = d.getMonth();
+    const d = new Date(); calYear = d.getFullYear(); calMonth = d.getMonth();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
-    const badge = document.getElementById('sync-badge');
-    badge.innerHTML = '<span class="pulse-dot"></span>LIVE · ' + new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}).toUpperCase();
-    renderCalendar();
-    renderCalStats();
-    renderPerformance();
-    renderFeedback();
-    renderFeedbackStats();
-    renderReflections();
-    renderReflStats();
+    document.getElementById('sync-badge').innerHTML = '<span class="pulse-dot"></span>LIVE · ' + new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}).toUpperCase();
+    renderDashboard();
+    renderCalendar(); renderCalStats();
+    renderFeedback(); renderFeedbackStats();
+    renderReflections(); renderReflStats();
   } catch(e) {
-    document.getElementById('loading').innerHTML = '<div class="loader-text" style="color:var(--muted)">No data available yet — check back soon.</div>';
+    document.getElementById('loading').innerHTML = '<div class="loader-text" style="color:var(--muted)">No data available yet.</div>';
   }
 }
 
@@ -352,38 +344,69 @@ function showTab(id, btn) {
   btn.classList.add('active');
 }
 
-// ── Stats pills ───────────────────────────────────────────────────────────────
 function statPill(num, label) {
   return `<div class="stat-pill"><div class="stat-num">${num}</div><div class="stat-lbl">${label}</div></div>`;
 }
 
-function renderCalStats() {
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
   const cal = passport.calendar || {};
-  const entries = Object.values(cal);
-  const total = entries.reduce((s,a) => s + a.length, 0);
-  const planned = entries.reduce((s,a) => s + a.filter(x => x.type==='planned').length, 0);
-  const actual  = entries.reduce((s,a) => s + a.filter(x => x.type==='actual').length, 0);
-  document.getElementById('cal-stats').innerHTML =
-    statPill(total, 'Total') + statPill(planned, 'Planned') + statPill(actual, 'Actual');
-}
-
-function renderFeedbackStats() {
+  const totalActs = Object.values(cal).reduce((s,a) => s + a.length, 0);
   const log = passport.feedbackLog || [];
-  const fb = log.filter(e => e.type==='feedback').length;
-  const ach = log.filter(e => e.type==='achievement').length;
-  const goal = log.filter(e => e.type==='goal').length;
-  document.getElementById('feedback-stats').innerHTML =
-    statPill(log.length, 'Total') + statPill(fb, 'Feedback') + statPill(ach, 'Achievements') + statPill(goal, 'Goals');
+  const refs = passport.reflections || [];
+
+  document.getElementById('dash-grid').innerHTML = `
+    <div class="dash-card" onclick="switchTab('calendar')">
+      <div class="dash-icon">📅</div>
+      <div class="dash-num">${totalActs}</div>
+      <div class="dash-label">Calendar Activities</div>
+    </div>
+    <div class="dash-card gold" onclick="switchTab('feedback')">
+      <div class="dash-icon">📝</div>
+      <div class="dash-num">${log.length}</div>
+      <div class="dash-label">Feedback Entries</div>
+    </div>
+    <div class="dash-card magenta" onclick="switchTab('reflections')">
+      <div class="dash-icon">✍️</div>
+      <div class="dash-num">${refs.length}</div>
+      <div class="dash-label">Reflections</div>
+    </div>`;
+
+  // Recent: last 3 feedback + last 2 reflections merged by date
+  const recent = [];
+  log.slice(-3).reverse().forEach(e => recent.push({ date: e.date || '', text: e.details, icon: '📝' }));
+  refs.slice(-2).reverse().forEach(r => recent.push({ date: r.date, text: r.text, icon: '✍️' }));
+  recent.sort((a,b) => b.date.localeCompare(a.date));
+
+  const el = document.getElementById('dash-recent-list');
+  if (!recent.length) { el.innerHTML = '<div class="empty">No recent activity.</div>'; return; }
+  el.innerHTML = recent.slice(0, 5).map(r => `
+    <div class="recent-item">
+      <div style="font-size:1.1rem;">${r.icon}</div>
+      <div style="flex:1; min-width:0;">
+        <div class="recent-date">${r.date}</div>
+        <div class="recent-text" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.text)}</div>
+      </div>
+    </div>`).join('');
 }
 
-function renderReflStats() {
-  const refs = passport.reflections || [];
-  document.getElementById('refl-stats').innerHTML = statPill(refs.length, 'Entries');
+function switchTab(id) {
+  const btn = [...document.querySelectorAll('nav button')].find(b => b.textContent.toLowerCase().includes(id));
+  if (btn) showTab(id, btn);
 }
 
 // ── Calendar ──────────────────────────────────────────────────────────────────
 function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
 function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+
+function renderCalStats() {
+  const cal = passport.calendar || {};
+  const vals = Object.values(cal);
+  const total   = vals.reduce((s,a) => s + a.length, 0);
+  const planned = vals.reduce((s,a) => s + a.filter(x => x.type==='planned').length, 0);
+  const actual  = vals.reduce((s,a) => s + a.filter(x => x.type==='actual').length, 0);
+  document.getElementById('cal-stats').innerHTML = statPill(total,'Total') + statPill(planned,'Planned') + statPill(actual,'Actual');
+}
 
 function renderCalendar() {
   document.getElementById('cal-label').textContent = MONTHS[calMonth] + ' ' + calYear;
@@ -392,37 +415,53 @@ function renderCalendar() {
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const daysInPrev = new Date(calYear, calMonth, 0).getDate();
-  const grid = document.getElementById('cal-grid');
-  let html = '';
   const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+  let html = '';
   for (let i = 0; i < totalCells; i++) {
     let day, month, year, other = false;
-    if (i < firstDay) { day = daysInPrev - firstDay + i + 1; month = calMonth - 1; year = calYear; other = true; }
+    if (i < firstDay)                    { day = daysInPrev - firstDay + i + 1; month = calMonth - 1; year = calYear; other = true; }
     else if (i < firstDay + daysInMonth) { day = i - firstDay + 1; month = calMonth; year = calYear; }
-    else { day = i - firstDay - daysInMonth + 1; month = calMonth + 1; year = calYear; other = true; }
+    else                                 { day = i - firstDay - daysInMonth + 1; month = calMonth + 1; year = calYear; other = true; }
     const m = ((month % 12) + 12) % 12;
     const y = month < 0 ? year - 1 : month > 11 ? year + 1 : year;
     const key = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const isToday = !other && day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
     const acts = cal[key] || [];
-    const hasActs = acts.length > 0;
-    html += `<div class="cal-cell${other?' other-month':''}${isToday?' today':''}${hasActs?' has-activity':''}">
+    const click = acts.length ? `onclick="openPopover(event,'${key}')"` : '';
+    html += `<div class="cal-cell${other?' other-month':''}${isToday?' today':''}${acts.length?' has-activity':''}" ${click}>
       <div class="cal-num">${day}</div>
       ${acts.map(a => `<div class="cal-act ${a.type}">${escHtml(a.title)}</div>`).join('')}
     </div>`;
   }
-  grid.innerHTML = html;
+  document.getElementById('cal-grid').innerHTML = html;
 }
 
-// ── Performance ───────────────────────────────────────────────────────────────
-function renderPerformance() {
-  const p = passport.performance || {};
-  document.getElementById('perf-score-val').textContent = p.score != null ? p.score : '—';
-  document.getElementById('perf-date').textContent = p.date ? 'As of ' + p.date : '';
-  document.getElementById('perf-notes').textContent = p.notes || 'No notes added yet.';
+function openPopover(e, key) {
+  const acts = (passport.calendar || {})[key] || [];
+  const pop = document.getElementById('day-popover');
+  const [y, m, d] = key.split('-');
+  document.getElementById('popover-date').textContent = `${parseInt(d)} ${MONTHS[parseInt(m)-1]} ${y}`;
+  document.getElementById('popover-acts').innerHTML = acts.map(a =>
+    `<div class="popover-act"><span class="popover-dot ${a.type}"></span>${escHtml(a.title)}</div>`).join('');
+  const rect = e.currentTarget.getBoundingClientRect();
+  pop.style.top  = (rect.bottom + 8 + window.scrollY) + 'px';
+  pop.style.left = Math.min(rect.left, window.innerWidth - 320) + 'px';
+  pop.classList.add('open');
+  e.stopPropagation();
 }
+function closePopover() { document.getElementById('day-popover').classList.remove('open'); }
+document.addEventListener('click', () => closePopover());
 
 // ── Feedback ──────────────────────────────────────────────────────────────────
+function renderFeedbackStats() {
+  const log = passport.feedbackLog || [];
+  document.getElementById('feedback-stats').innerHTML =
+    statPill(log.length,'Total') +
+    statPill(log.filter(e=>e.type==='feedback').length,'Feedback') +
+    statPill(log.filter(e=>e.type==='achievement').length,'Achievements') +
+    statPill(log.filter(e=>e.type==='goal').length,'Goals');
+}
+
 function filterFeedback(f, btn) {
   feedFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -431,37 +470,76 @@ function filterFeedback(f, btn) {
 }
 
 function renderFeedback() {
-  const log = (passport.feedbackLog || []).slice().reverse();
-  const filtered = feedFilter === 'all' ? log : log.filter(e => e.type === feedFilter);
-  const typeLabel = { feedback: 'Feedback', achievement: 'Achievement', goal: 'Goal Update' };
+  const q = (document.getElementById('feedback-search')?.value || '').toLowerCase();
+  const typeLabel = { feedback:'Feedback', achievement:'Achievement', goal:'Goal Update' };
+  let log = (passport.feedbackLog || []).slice().reverse();
+  if (feedFilter !== 'all') log = log.filter(e => e.type === feedFilter);
+  if (q) log = log.filter(e => (e.details+e.source+e.action).toLowerCase().includes(q));
   const el = document.getElementById('feedback-list');
-  if (!filtered.length) { el.innerHTML = '<div class="empty">No entries yet.</div>'; return; }
-  el.innerHTML = filtered.map((e, i) => `
-    <div class="log-entry ${e.type}" style="animation-delay:${i * 0.06}s">
-      <div class="log-meta">
-        <span class="log-date">${e.date || ''}</span>
-        <span class="log-type type-${e.type}">${typeLabel[e.type] || e.type}</span>
+  if (!log.length) { el.innerHTML = '<div class="empty">No entries found.</div>'; return; }
+  el.innerHTML = log.map((e, i) => `
+    <div class="log-entry ${e.type}" style="animation-delay:${i*0.05}s">
+      <div class="log-header" onclick="toggleLog(this)">
+        <div class="log-meta">
+          <span class="log-date">${e.date||''}</span>
+          <span class="log-type type-${e.type}">${typeLabel[e.type]||e.type}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="log-preview">${escHtml(e.details)}</div>
+          <span class="log-chevron">▼</span>
+        </div>
       </div>
-      ${e.source ? `<div class="log-source">📌 ${escHtml(e.source)}</div>` : ''}
-      <div class="log-details">${escHtml(e.details)}</div>
-      ${e.action ? `<div class="log-action">→ ${escHtml(e.action)}</div>` : ''}
+      <div class="log-body">
+        ${e.source?`<div class="log-source">📌 ${escHtml(e.source)}</div>`:''}
+        <div class="log-details">${escHtml(e.details)}</div>
+        ${e.action?`<div class="log-action">→ ${escHtml(e.action)}</div>`:''}
+      </div>
     </div>`).join('');
+}
+
+function toggleLog(header) {
+  const body = header.nextElementSibling;
+  const chev = header.querySelector('.log-chevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
 }
 
 // ── Reflections ───────────────────────────────────────────────────────────────
+function renderReflStats() {
+  const refs = passport.reflections || [];
+  document.getElementById('refl-stats').innerHTML = statPill(refs.length, 'Entries');
+}
+
 function renderReflections() {
-  const refs = (passport.reflections || []).slice().reverse();
+  const q = (document.getElementById('refl-search')?.value || '').toLowerCase();
+  let refs = (passport.reflections || []).slice().reverse();
+  if (q) refs = refs.filter(r => r.text.toLowerCase().includes(q));
   const el = document.getElementById('reflections-list');
-  if (!refs.length) { el.innerHTML = '<div class="empty">No reflections added yet.</div>'; return; }
+  if (!refs.length) { el.innerHTML = '<div class="empty">No reflections found.</div>'; return; }
   el.innerHTML = refs.map((r, i) => `
-    <div class="refl-entry" style="animation-delay:${i * 0.08}s">
-      <div class="refl-date">${r.date}</div>
-      <div class="refl-text">${escHtml(r.text)}</div>
+    <div class="refl-entry" style="animation-delay:${i*0.06}s">
+      <div class="refl-header" onclick="toggleRefl(this)">
+        <div class="refl-header-inner">
+          <div class="refl-date">${r.date}</div>
+          <div class="refl-preview">${escHtml(r.text)}</div>
+        </div>
+        <span class="refl-chevron">▼</span>
+      </div>
+      <div class="refl-body">
+        <div class="refl-text">${escHtml(r.text)}</div>
+      </div>
     </div>`).join('');
 }
 
+function toggleRefl(header) {
+  const body = header.nextElementSibling;
+  const chev = header.querySelector('.refl-chevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
 function escHtml(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 loadPassport();
