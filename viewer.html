@@ -273,10 +273,6 @@
     <div class="section" id="tab-feedback">
       <div class="section-title">Feedback & Achievements</div>
       <div class="stats-bar" id="feedback-stats"></div>
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input class="search-input" id="feedback-search" placeholder="Search feedback…" oninput="renderFeedback()">
-      </div>
       <div class="filter-bar">
         <button class="filter-btn active" onclick="filterFeedback('all', this)">All</button>
         <button class="filter-btn" onclick="filterFeedback('feedback', this)">Feedback</button>
@@ -470,11 +466,9 @@ function filterFeedback(f, btn) {
 }
 
 function renderFeedback() {
-  const q = (document.getElementById('feedback-search')?.value || '').toLowerCase();
   const typeLabel = { feedback:'Feedback', achievement:'Achievement', goal:'Goal Update' };
   let log = (passport.feedbackLog || []).slice().reverse();
   if (feedFilter !== 'all') log = log.filter(e => e.type === feedFilter);
-  if (q) log = log.filter(e => (e.details+e.source+e.action).toLowerCase().includes(q));
   const el = document.getElementById('feedback-list');
   if (!log.length) { el.innerHTML = '<div class="empty">No entries found.</div>'; return; }
   el.innerHTML = log.map((e, i) => `
@@ -513,22 +507,31 @@ function renderReflStats() {
 function renderReflections() {
   const q = (document.getElementById('refl-search')?.value || '').toLowerCase();
   let refs = (passport.reflections || []).slice().reverse();
-  if (q) refs = refs.filter(r => r.text.toLowerCase().includes(q));
+  if (q) refs = refs.filter(r => (r.title+r.context+r.activities+r.takeaways+r.text||'').toLowerCase().includes(q));
   const el = document.getElementById('reflections-list');
   if (!refs.length) { el.innerHTML = '<div class="empty">No reflections found.</div>'; return; }
-  el.innerHTML = refs.map((r, i) => `
+  el.innerHTML = refs.map((r, i) => {
+    const isNew = r.title !== undefined;
+    const preview = isNew ? (r.title || r.context || r.activities || r.takeaways || '') : (r.text || '');
+    const bodyHtml = isNew ? `
+      <div class="refl-text">
+        ${r.mood ? `<div style="margin-bottom:12px;"><span style="font-size:0.78rem; background:rgba(0,245,255,0.08); border:1px solid rgba(0,245,255,0.2); border-radius:12px; padding:3px 12px;">${escHtml(r.mood)}</span></div>` : ''}
+        ${r.context ? `<div style="margin-bottom:14px;"><div style="font-family:'Orbitron',monospace;font-size:0.58rem;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">CONTEXT</div><div style="white-space:pre-wrap;">${escHtml(r.context)}</div></div>` : ''}
+        ${r.activities ? `<div style="margin-bottom:14px;"><div style="font-family:'Orbitron',monospace;font-size:0.58rem;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">ACTIVITIES OF THE WEEK</div><div style="white-space:pre-wrap;">${escHtml(r.activities)}</div></div>` : ''}
+        ${r.takeaways ? `<div><div style="font-family:'Orbitron',monospace;font-size:0.58rem;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">KEY TAKEAWAYS</div><div style="white-space:pre-wrap;">${escHtml(r.takeaways)}</div></div>` : ''}
+      </div>` : `<div class="refl-text">${escHtml(r.text||'')}</div>`;
+    return `
     <div class="refl-entry" style="animation-delay:${i*0.06}s">
       <div class="refl-header" onclick="toggleRefl(this)">
         <div class="refl-header-inner">
-          <div class="refl-date">${r.date}</div>
-          <div class="refl-preview">${escHtml(r.text)}</div>
+          <div class="refl-date">${r.date}${r.mood ? ' · ' + escHtml(r.mood) : ''}</div>
+          <div class="refl-preview">${escHtml(isNew && r.title ? r.title : preview)}</div>
         </div>
         <span class="refl-chevron">▼</span>
       </div>
-      <div class="refl-body">
-        <div class="refl-text">${escHtml(r.text)}</div>
-      </div>
-    </div>`).join('');
+      <div class="refl-body">${bodyHtml}</div>
+    </div>`;
+  }).join('');
 }
 
 function toggleRefl(header) {
